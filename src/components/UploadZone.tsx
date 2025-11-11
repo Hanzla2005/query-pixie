@@ -57,44 +57,28 @@ const UploadZone = () => {
 
     // Upload files
     for (const file of validFiles) {
+      const loadingToast = toast.loading(`Uploading ${file.name}...`);
+      
       try {
-        toast.loading(`Uploading ${file.name}...`);
-        
-        // Get the user's session token
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error("Please sign in to upload datasets");
-          return;
-        }
-        
         const formData = new FormData();
         formData.append("file", file);
 
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-dataset`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: formData,
-          }
-        );
+        const { data, error } = await supabase.functions.invoke('upload-dataset', {
+          body: formData,
+        });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Upload failed");
+        if (error) {
+          throw error;
         }
 
-        const result = await response.json();
-        toast.dismiss();
+        toast.dismiss(loadingToast);
         toast.success(`${file.name} uploaded successfully!`);
         
         // Trigger a refresh of the dataset list
         window.dispatchEvent(new CustomEvent("dataset-uploaded"));
       } catch (error) {
         console.error("Upload error:", error);
-        toast.dismiss();
+        toast.dismiss(loadingToast);
         toast.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
