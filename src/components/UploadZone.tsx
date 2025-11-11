@@ -40,7 +40,7 @@ const UploadZone = () => {
     }
   };
 
-  const handleFiles = (files: File[]) => {
+  const handleFiles = async (files: File[]) => {
     const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
     const validFiles = files.filter(file => validTypes.includes(file.type) || file.name.endsWith('.csv') || file.name.endsWith('.xlsx'));
 
@@ -54,9 +54,40 @@ const UploadZone = () => {
       return;
     }
 
-    // Placeholder - will implement with Lovable Cloud
-    toast.info("File upload will be enabled with Lovable Cloud");
-    console.log("Files to upload:", validFiles);
+    // Upload files
+    for (const file of validFiles) {
+      try {
+        toast.loading(`Uploading ${file.name}...`);
+        
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-dataset`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Upload failed");
+        }
+
+        const result = await response.json();
+        toast.success(`${file.name} uploaded successfully!`);
+        
+        // Trigger a refresh of the dataset list
+        window.dispatchEvent(new CustomEvent("dataset-uploaded"));
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
+    }
   };
 
   return (

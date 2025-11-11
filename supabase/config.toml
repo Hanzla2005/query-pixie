@@ -1,1 +1,10 @@
 project_id = "lbyticixgkicsfvoekhn"
+
+[functions.hello-world]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = true
+
+[functions.upload-dataset]
+verify_jwt = true

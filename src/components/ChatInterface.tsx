@@ -32,11 +32,6 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
     e.preventDefault();
     
     if (!input.trim()) return;
-    
-    if (!datasetId) {
-      toast.error("Please select a dataset first");
-      return;
-    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -49,17 +44,98 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
     setInput("");
     setIsLoading(true);
 
-    // Placeholder - will implement with Lovable Cloud and Gemini
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "AI responses will be available once Lovable Cloud is enabled with Gemini API integration.",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            messages: [...messages, userMessage].map(m => ({
+              role: m.role,
+              content: m.content,
+            })),
+            datasetId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to get response");
+      }
+
+      if (!response.body) throw new Error("No response body");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+      let assistantMessageId = (Date.now() + 1).toString();
+
+      // Add initial assistant message
+      setMessages(prev => [
+        ...prev,
+        {
+          id: assistantMessageId,
+          role: "assistant",
+          content: "",
+          timestamp: new Date(),
+        },
+      ]);
+
+      let textBuffer = "";
+      let streamDone = false;
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantMessageId
+                    ? { ...m, content: assistantContent }
+                    : m
+                )
+              );
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
       setIsLoading(false);
-    }, 1000);
+    } catch (error) {
+      console.error("Chat error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to send message");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -72,7 +148,7 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
               <p className="text-muted-foreground">
                 {datasetId 
                   ? "Start a conversation about your data. Ask questions, request visualizations, or get insights."
-                  : "Upload a dataset to begin chatting with the AI assistant."}
+                  : "Ask me anything about data analysis, or upload a dataset to begin analyzing your data."}
               </p>
             </div>
           )}
@@ -125,10 +201,10 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about your data..."
-          disabled={isLoading || !datasetId}
+          disabled={isLoading}
           className="flex-1"
         />
-        <Button type="submit" disabled={isLoading || !datasetId || !input.trim()}>
+        <Button type="submit" disabled={isLoading || !input.trim()}>
           <Send className="h-4 w-4" />
         </Button>
       </form>
