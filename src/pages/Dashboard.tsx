@@ -1,14 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Upload, FileText, MessageSquare, BarChart3, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Brain, Upload, FileText, MessageSquare, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import UploadZone from "@/components/UploadZone";
 import ChatInterface from "@/components/ChatInterface";
 import DatasetList from "@/components/DatasetList";
 
 const Dashboard = () => {
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check authentication
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      setUserEmail(session.user.email || "");
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        navigate("/auth");
+      } else if (session?.user?.email) {
+        setUserEmail(session.user.email);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      navigate("/auth");
+    } catch (error) {
+      toast.error("Error signing out");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -20,7 +59,8 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold text-foreground">DataMind</h1>
           </Link>
           <div className="flex gap-4 items-center">
-            <Button variant="ghost" size="sm">
+            <span className="text-sm text-muted-foreground hidden md:inline">{userEmail}</span>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
