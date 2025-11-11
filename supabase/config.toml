@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.upload-dataset]
 verify_jwt = true
+
+[functions.get-dataset]
+verify_jwt = true

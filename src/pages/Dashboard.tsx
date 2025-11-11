@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import UploadZone from "@/components/UploadZone";
 import ChatInterface from "@/components/ChatInterface";
 import DatasetList from "@/components/DatasetList";
+import DatasetPreview from "@/components/DatasetPreview";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Dashboard = () => {
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
@@ -110,16 +112,27 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  AI Assistant
+                  Dataset Analysis
                 </CardTitle>
                 <CardDescription>
                   {selectedDataset 
-                    ? `Chatting about: ${selectedDataset}`
+                    ? "View your data and chat with AI"
                     : "Upload a dataset to start analyzing"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[calc(100%-5rem)]">
-                <ChatInterface datasetId={selectedDataset} />
+                <Tabs defaultValue="chat" className="h-full flex flex-col">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="chat">AI Chat</TabsTrigger>
+                    <TabsTrigger value="preview">Data Preview</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="chat" className="flex-1 mt-0">
+                    <ChatInterface datasetId={selectedDataset} />
+                  </TabsContent>
+                  <TabsContent value="preview" className="flex-1 mt-0">
+                    <DatasetPreview datasetId={selectedDataset} />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
