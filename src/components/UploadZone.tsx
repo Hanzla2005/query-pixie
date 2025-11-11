@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Upload, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const UploadZone = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -59,6 +60,13 @@ const UploadZone = () => {
       try {
         toast.loading(`Uploading ${file.name}...`);
         
+        // Get the user's session token
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error("Please sign in to upload datasets");
+          return;
+        }
+        
         const formData = new FormData();
         formData.append("file", file);
 
@@ -67,7 +75,7 @@ const UploadZone = () => {
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              Authorization: `Bearer ${session.access_token}`,
             },
             body: formData,
           }
@@ -79,12 +87,14 @@ const UploadZone = () => {
         }
 
         const result = await response.json();
+        toast.dismiss();
         toast.success(`${file.name} uploaded successfully!`);
         
         // Trigger a refresh of the dataset list
         window.dispatchEvent(new CustomEvent("dataset-uploaded"));
       } catch (error) {
         console.error("Upload error:", error);
+        toast.dismiss();
         toast.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
