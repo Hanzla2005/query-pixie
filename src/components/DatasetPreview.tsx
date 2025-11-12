@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DatasetPreviewProps {
   datasetId: string | null;
@@ -17,6 +18,7 @@ interface PreviewData {
   currentPage: number;
   pageSize: number;
   totalPages: number;
+  statistics?: Record<string, { min: number; max: number; mean: number }>;
 }
 
 const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
@@ -105,7 +107,33 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full gap-4">
+      {previewData.statistics && Object.keys(previewData.statistics).length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.entries(previewData.statistics).map(([column, stats]) => (
+            <Card key={column}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">{column}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Min:</span>
+                  <span className="font-medium">{stats.min.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Max:</span>
+                  <span className="font-medium">{stats.max.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Mean:</span>
+                  <span className="font-medium">{stats.mean.toFixed(2)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      
       <ScrollArea className="flex-1">
         <Table>
           <TableHeader>

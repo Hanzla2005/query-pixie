@@ -17,16 +17,25 @@ serve(async (req) => {
       throw new Error("Missing authorization header");
     }
 
-    const supabaseClient = createClient(
+    // Create client for auth verification (with user token)
+    const authClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
+    const { data: { user }, error: userError } = await authClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (userError || !user) {
       throw new Error("Unauthorized");
     }
+
+    // Create client with service role for database/storage operations
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
 
     const { datasetId, page = 1, pageSize = 50 } = await req.json();
 
@@ -61,6 +70,7 @@ serve(async (req) => {
     let rows: string[][] = [];
     let headers: string[] = [];
     let totalRows = 0;
+    let statistics: Record<string, { min: number; max: number; mean: number }> = {};
 
     if (fileExt === "csv") {
       const lines = fileContent.split("\n").filter(line => line.trim());
@@ -78,6 +88,39 @@ serve(async (req) => {
           const row = lines[i].split(",").map(cell => cell.trim().replace(/^"|"$/g, ""));
           rows.push(row);
         }
+
+        // Calculate statistics for numeric columns (only on first page request)
+        if (page === 1) {
+          const columnData: Record<string, number[]> = {};
+          
+          // Initialize arrays for each column
+          headers.forEach(header => {
+            columnData[header] = [];
+          });
+
+          // Collect numeric values for each column
+          for (let i = 1; i < lines.length; i++) {
+            const row = lines[i].split(",").map(cell => cell.trim().replace(/^"|"$/g, ""));
+            row.forEach((cell, idx) => {
+              const value = parseFloat(cell);
+              if (!isNaN(value) && headers[idx]) {
+                columnData[headers[idx]].push(value);
+              }
+            });
+          }
+
+          // Calculate min, max, mean for numeric columns
+          Object.keys(columnData).forEach(column => {
+            const values = columnData[column];
+            if (values.length > 0) {
+              statistics[column] = {
+                min: Math.min(...values),
+                max: Math.max(...values),
+                mean: values.reduce((a, b) => a + b, 0) / values.length
+              };
+            }
+          });
+        }
       }
     } else {
       throw new Error("XLSX preview not yet supported. Please convert to CSV.");
@@ -91,6 +134,7 @@ serve(async (req) => {
         currentPage: page,
         pageSize,
         totalPages: Math.ceil(totalRows / pageSize),
+        statistics: page === 1 ? statistics : undefined,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
