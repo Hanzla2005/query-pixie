@@ -118,15 +118,21 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
               <CardContent className="space-y-1">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Min:</span>
-                  <span className="font-medium">{stats.min.toFixed(2)}</span>
+                  <span className="font-medium">
+                    {stats?.min != null ? stats.min.toFixed(2) : 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Max:</span>
-                  <span className="font-medium">{stats.max.toFixed(2)}</span>
+                  <span className="font-medium">
+                    {stats?.max != null ? stats.max.toFixed(2) : 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Mean:</span>
-                  <span className="font-medium">{stats.mean.toFixed(2)}</span>
+                  <span className="font-medium">
+                    {stats?.mean != null ? stats.mean.toFixed(2) : 'N/A'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
