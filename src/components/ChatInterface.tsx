@@ -5,12 +5,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Bot, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import ChartDisplay from "./ChartDisplay";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  chartData?: {
+    chartType: "bar" | "line" | "pie" | "area";
+    title: string;
+    data: Array<{ name: string; value: number }>;
+    xAxisLabel?: string;
+    yAxisLabel?: string;
+  };
 }
 
 interface ChatInterfaceProps {
@@ -120,6 +128,8 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
+            const toolCalls = parsed.choices?.[0]?.delta?.tool_calls;
+            
             if (content) {
               assistantContent += content;
               setMessages(prev =>
@@ -129,6 +139,28 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
                     : m
                 )
               );
+            }
+            
+            // Handle tool calls (chart data)
+            if (toolCalls && toolCalls[0]?.function?.arguments) {
+              try {
+                const args = JSON.parse(toolCalls[0].function.arguments);
+                if (args.chartType && args.data) {
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMessageId
+                        ? { 
+                            ...m, 
+                            content: assistantContent,
+                            chartData: args 
+                          }
+                        : m
+                    )
+                  );
+                }
+              } catch (e) {
+                console.error("Error parsing tool call:", e);
+              }
             }
           } catch {
             textBuffer = line + "\n" + textBuffer;
@@ -177,7 +209,16 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
                     : "bg-muted"
                 }`}
               >
-                <p className="text-sm">{message.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                {message.chartData && (
+                  <ChartDisplay
+                    chartType={message.chartData.chartType}
+                    title={message.chartData.title}
+                    data={message.chartData.data}
+                    xAxisLabel={message.chartData.xAxisLabel}
+                    yAxisLabel={message.chartData.yAxisLabel}
+                  />
+                )}
                 <p className="text-xs opacity-70 mt-1">
                   {message.timestamp.toLocaleTimeString()}
                 </p>

@@ -67,6 +67,49 @@ serve(async (req) => {
           ...messages,
         ],
         stream: true,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "create_chart",
+              description: "Create a chart or graph visualization from data. Use this when the user asks for visualizations like bar charts, line charts, pie charts, etc.",
+              parameters: {
+                type: "object",
+                properties: {
+                  chartType: {
+                    type: "string",
+                    enum: ["bar", "line", "pie", "area"],
+                    description: "The type of chart to create"
+                  },
+                  title: {
+                    type: "string",
+                    description: "Title of the chart"
+                  },
+                  data: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" },
+                        value: { type: "number" }
+                      }
+                    },
+                    description: "Array of data points with name and value"
+                  },
+                  xAxisLabel: {
+                    type: "string",
+                    description: "Label for X axis (optional)"
+                  },
+                  yAxisLabel: {
+                    type: "string",
+                    description: "Label for Y axis (optional)"
+                  }
+                },
+                required: ["chartType", "title", "data"]
+              }
+            }
+          }
+        ],
       }),
     });
 
