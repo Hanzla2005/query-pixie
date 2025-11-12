@@ -38,17 +38,15 @@ serve(async (req) => {
       );
     }
 
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const { fileName, fileData, fileType } = await req.json();
     
-    if (!file) {
+    if (!fileName || !fileData) {
       return new Response(
         JSON.stringify({ error: "No file provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const fileName = file.name;
     const fileExt = fileName.split(".").pop()?.toLowerCase();
     
     if (!["csv", "xlsx"].includes(fileExt || "")) {
@@ -58,11 +56,19 @@ serve(async (req) => {
       );
     }
 
+    // Convert base64 to blob
+    const binaryString = atob(fileData);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: fileType || 'application/octet-stream' });
+
     // Upload file to storage
     const filePath = `${user.id}/${Date.now()}-${fileName}`;
     const { error: uploadError } = await supabaseClient.storage
       .from("datasets")
-      .upload(filePath, file);
+      .upload(filePath, blob, { contentType: fileType });
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
@@ -70,7 +76,8 @@ serve(async (req) => {
     }
 
     // Parse file to get metadata
-    const fileContent = await file.text();
+    const textDecoder = new TextDecoder();
+    const fileContent = textDecoder.decode(bytes);
     let columns: string[] = [];
     let rowCount = 0;
 

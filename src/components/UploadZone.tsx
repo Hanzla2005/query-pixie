@@ -60,11 +60,23 @@ const UploadZone = () => {
       const loadingToast = toast.loading(`Uploading ${file.name}...`);
       
       try {
-        const formData = new FormData();
-        formData.append("file", file);
+        // Convert file to base64
+        const reader = new FileReader();
+        const fileBase64 = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            resolve(base64.split(',')[1]); // Remove data:mime;base64, prefix
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
 
         const { data, error } = await supabase.functions.invoke('upload-dataset', {
-          body: formData,
+          body: {
+            fileName: file.name,
+            fileData: fileBase64,
+            fileType: file.type,
+          },
         });
 
         if (error) {
