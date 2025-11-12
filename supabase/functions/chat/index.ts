@@ -19,24 +19,20 @@ serve(async (req) => {
       throw new Error("Missing authorization header");
     }
 
-    // Create client for auth verification (with user token)
-    const authClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const token = authHeader.replace('Bearer ', '');
 
-    const { data: { user }, error: userError } = await authClient.auth.getUser();
-    if (userError || !user) {
-      console.error("Auth error:", userError);
-      throw new Error("Unauthorized");
-    }
-
-    // Create client with service role for database operations
+    // Create client with service role for all operations
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Verify the user's JWT token
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !user) {
+      console.error("Auth error:", userError);
+      throw new Error("Unauthorized");
+    }
 
     // Get dataset context if datasetId is provided
     let systemPrompt = "You are DataMind, an AI assistant specialized in data analysis and insights. You help users understand their datasets, create visualizations, and discover patterns in their data. Keep your responses clear, concise, and actionable.";
