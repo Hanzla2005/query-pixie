@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { 
       status: 204,
@@ -16,8 +17,13 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Upload dataset function called");
+    console.log("Request method:", req.method);
     const authHeader = req.headers.get("Authorization");
+    console.log("Auth header present:", !!authHeader);
+    
     if (!authHeader) {
+      console.error("Missing authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -31,14 +37,19 @@ serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    console.log("User authenticated:", !!user);
+    
     if (userError || !user) {
+      console.error("User authentication failed:", userError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log("Parsing request body...");
     const { fileName, fileData, fileType } = await req.json();
+    console.log("File name:", fileName, "File type:", fileType);
     
     if (!fileName || !fileData) {
       return new Response(
@@ -124,8 +135,12 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Upload dataset error:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: error instanceof Error ? error.stack : undefined
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
