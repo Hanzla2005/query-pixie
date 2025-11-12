@@ -108,8 +108,8 @@ const Dashboard = () => {
 
           {/* Right Column - Chat & Analysis */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg h-[calc(100vh-12rem)]">
-              <CardHeader>
+            <Card className="shadow-lg h-[calc(100vh-12rem)] flex flex-col">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
                   Dataset Analysis
@@ -120,16 +120,16 @@ const Dashboard = () => {
                     : "Upload a dataset to start analyzing"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-[calc(100%-5rem)]">
-                <Tabs defaultValue="chat" className="h-full flex flex-col">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
+              <CardContent className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
+                  <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
                     <TabsTrigger value="chat">AI Chat</TabsTrigger>
                     <TabsTrigger value="preview">Data Preview</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="chat" className="flex-1 mt-0">
+                  <TabsContent value="chat" className="flex-1 min-h-0 mt-0 overflow-hidden">
                     <ChatInterface datasetId={selectedDataset} />
                   </TabsContent>
-                  <TabsContent value="preview" className="flex-1 mt-0">
+                  <TabsContent value="preview" className="flex-1 min-h-0 mt-0 overflow-hidden">
                     <DatasetPreview datasetId={selectedDataset} />
                   </TabsContent>
                 </Tabs>

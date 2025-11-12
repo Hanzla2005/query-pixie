@@ -178,8 +178,8 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
+    <div className="flex flex-col h-full overflow-hidden">
+      <ScrollArea className="flex-1 pr-4 overflow-y-auto" ref={scrollRef}>
         <div className="space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-12">
@@ -203,25 +203,29 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
                 </div>
               )}
               <div
-                className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                className={`rounded-lg px-4 py-2 ${
                   message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "bg-primary text-primary-foreground max-w-[80%]"
+                    : "w-full"
                 }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 {message.chartData && (
-                  <ChartDisplay
-                    chartType={message.chartData.chartType}
-                    title={message.chartData.title}
-                    data={message.chartData.data}
-                    xAxisLabel={message.chartData.xAxisLabel}
-                    yAxisLabel={message.chartData.yAxisLabel}
-                  />
+                  <div className="mt-4">
+                    <ChartDisplay
+                      chartType={message.chartData.chartType}
+                      title={message.chartData.title}
+                      data={message.chartData.data}
+                      xAxisLabel={message.chartData.xAxisLabel}
+                      yAxisLabel={message.chartData.yAxisLabel}
+                    />
+                  </div>
                 )}
-                <p className="text-xs opacity-70 mt-1">
-                  {message.timestamp.toLocaleTimeString()}
-                </p>
+                {!message.chartData && (
+                  <p className="text-xs opacity-70 mt-1">
+                    {message.timestamp.toLocaleTimeString()}
+                  </p>
+                )}
               </div>
               {message.role === "user" && (
                 <div className="rounded-full bg-secondary h-8 w-8 flex items-center justify-center flex-shrink-0">
@@ -244,7 +248,7 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSend} className="mt-4 flex gap-2">
+      <form onSubmit={handleSend} className="mt-4 flex gap-2 flex-shrink-0">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
