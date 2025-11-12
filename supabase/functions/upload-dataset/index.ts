@@ -30,13 +30,16 @@ serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(
+    // Create client for auth verification (with user token)
+    const authClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: userError } = await authClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
     console.log("User authenticated:", !!user);
     
     if (userError || !user) {
@@ -46,6 +49,12 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Create client with service role for database/storage operations
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
 
     console.log("Parsing request body...");
     const { fileName, fileData, fileType } = await req.json();
