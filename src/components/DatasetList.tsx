@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, MoreVertical } from "lucide-react";
+import { FileSpreadsheet, MoreVertical, RefreshCw } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DatasetListProps {
   onSelect: (datasetId: string) => void;
@@ -22,6 +28,7 @@ interface Dataset {
 const DatasetList = ({ onSelect }: DatasetListProps) => {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   const fetchDatasets = async () => {
     try {
@@ -55,6 +62,42 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
   const handleSelect = (datasetId: string) => {
     setSelectedId(datasetId);
     onSelect(datasetId);
+  };
+
+  const handleReprocess = async (datasetId: string, datasetName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    setProcessingIds(prev => new Set(prev).add(datasetId));
+    const loadingToast = toast.loading(`Reprocessing ${datasetName}...`);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('preprocess-dataset', {
+        body: { datasetId },
+      });
+
+      if (error) throw error;
+
+      toast.dismiss(loadingToast);
+      toast.success(`${datasetName} reprocessed successfully!`);
+      
+      // Refresh the dataset list
+      await fetchDatasets();
+      
+      // If this dataset is currently selected, trigger a refresh
+      if (selectedId === datasetId) {
+        window.dispatchEvent(new CustomEvent("dataset-reprocessed"));
+      }
+    } catch (error) {
+      console.error("Reprocess error:", error);
+      toast.dismiss(loadingToast);
+      toast.error(`Failed to reprocess ${datasetName}: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setProcessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(datasetId);
+        return newSet;
+      });
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -106,16 +149,27 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={(e) => handleReprocess(dataset.id, dataset.name, e)}
+                      disabled={processingIds.has(dataset.id)}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${processingIds.has(dataset.id) ? 'animate-spin' : ''}`} />
+                      {processingIds.has(dataset.id) ? 'Processing...' : 'Reprocess Data'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </button>
           ))}

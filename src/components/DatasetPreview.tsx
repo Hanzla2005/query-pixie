@@ -74,6 +74,20 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
     }
   }, [datasetId]);
 
+  useEffect(() => {
+    const handleReprocess = () => {
+      if (datasetId) {
+        setCurrentPage(1);
+        fetchPreview(1);
+      }
+    };
+
+    window.addEventListener("dataset-reprocessed", handleReprocess);
+    return () => {
+      window.removeEventListener("dataset-reprocessed", handleReprocess);
+    };
+  }, [datasetId]);
+
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       fetchPreview(currentPage - 1);
