@@ -45,7 +45,15 @@ serve(async (req) => {
         .single();
 
       if (dataset) {
-        systemPrompt += `\n\nYou are currently analyzing a dataset named "${dataset.name}" with ${dataset.row_count} rows and the following columns: ${JSON.stringify(dataset.columns)}. Use this context to provide relevant insights and suggestions.`;
+        let preprocessingInfo = "";
+        if (dataset.preprocessing_status === 'completed' && dataset.preprocessing_metadata) {
+          const meta = dataset.preprocessing_metadata;
+          preprocessingInfo = `\n\nData Preprocessing Applied:\n${meta.steps?.map((s: string) => `- ${s}`).join('\n') || ''}\nData cleaned: ${dataset.original_row_count || 0} rows → ${dataset.row_count || 0} rows\n- Removed ${meta.removedRows || 0} empty rows\n- Removed ${meta.duplicatesRemoved || 0} duplicate rows\n- Cleaned ${meta.cleanedCells || 0} cells with missing values`;
+        } else if (dataset.preprocessing_status === 'pending') {
+          preprocessingInfo = '\n\nNote: Dataset is currently being preprocessed. Data shown may not be fully cleaned yet.';
+        }
+        
+        systemPrompt += `\n\nYou are currently analyzing a dataset named "${dataset.name}" with ${dataset.row_count} rows and the following columns: ${JSON.stringify(dataset.columns)}.${preprocessingInfo}\n\nUse this context to provide relevant insights and suggestions.`;
       }
     }
 

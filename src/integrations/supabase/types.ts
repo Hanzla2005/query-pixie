@@ -56,6 +56,10 @@ export type Database = {
           file_path: string
           id: string
           name: string
+          original_row_count: number | null
+          preprocessing_metadata: Json | null
+          preprocessing_status: string | null
+          processed_row_count: number | null
           row_count: number | null
           updated_at: string | null
           user_id: string
@@ -66,6 +70,10 @@ export type Database = {
           file_path: string
           id?: string
           name: string
+          original_row_count?: number | null
+          preprocessing_metadata?: Json | null
+          preprocessing_status?: string | null
+          processed_row_count?: number | null
           row_count?: number | null
           updated_at?: string | null
           user_id: string
@@ -76,6 +84,10 @@ export type Database = {
           file_path?: string
           id?: string
           name?: string
+          original_row_count?: number | null
+          preprocessing_metadata?: Json | null
+          preprocessing_status?: string | null
+          processed_row_count?: number | null
           row_count?: number | null
           updated_at?: string | null
           user_id?: string

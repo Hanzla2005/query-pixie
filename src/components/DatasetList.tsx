@@ -14,6 +14,9 @@ interface Dataset {
   name: string;
   created_at: string;
   row_count: number | null;
+  preprocessing_status: string;
+  original_row_count: number | null;
+  preprocessing_metadata: any;
 }
 
 const DatasetList = ({ onSelect }: DatasetListProps) => {
@@ -24,7 +27,7 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
     try {
       const { data, error } = await supabase
         .from("datasets")
-        .select("id, name, created_at, row_count")
+        .select("id, name, created_at, row_count, preprocessing_status, original_row_count, preprocessing_metadata")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -93,7 +96,12 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{dataset.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {dataset.row_count !== null ? `${dataset.row_count.toLocaleString()} rows • ` : ""}
+                      {dataset.row_count !== null ? `${dataset.row_count.toLocaleString()} rows` : ""}
+                      {dataset.preprocessing_status === 'completed' && dataset.original_row_count && dataset.original_row_count !== dataset.row_count
+                        ? ` (cleaned from ${dataset.original_row_count.toLocaleString()})`
+                        : ""}
+                      {dataset.row_count !== null ? " • " : ""}
+                      {dataset.preprocessing_status === 'pending' ? "Processing... • " : ""}
                       {formatDate(dataset.created_at)}
                     </p>
                   </div>

@@ -123,6 +123,8 @@ serve(async (req) => {
         user_id: user.id,
         columns: columns,
         row_count: rowCount,
+        original_row_count: rowCount,
+        preprocessing_status: 'pending',
       })
       .select()
       .single();
@@ -134,11 +136,36 @@ serve(async (req) => {
       throw new Error(`Failed to create dataset record: ${insertError.message}`);
     }
 
+    // Trigger preprocessing in background
+    console.log("Triggering preprocessing for dataset:", dataset.id);
+    try {
+      const preprocessResponse = await fetch(
+        `${Deno.env.get("SUPABASE_URL")}/functions/v1/preprocess-dataset`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": authHeader,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ datasetId: dataset.id }),
+        }
+      );
+      
+      if (!preprocessResponse.ok) {
+        console.error("Preprocessing failed:", await preprocessResponse.text());
+      } else {
+        console.log("Preprocessing started successfully");
+      }
+    } catch (preprocessError) {
+      console.error("Error triggering preprocessing:", preprocessError);
+      // Don't fail the upload if preprocessing fails
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         dataset,
-        message: "Dataset uploaded successfully" 
+        message: "Dataset uploaded and preprocessing started" 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -84,7 +84,7 @@ const UploadZone = () => {
         }
 
         toast.dismiss(loadingToast);
-        toast.success(`${file.name} uploaded successfully!`);
+        toast.success(`${file.name} uploaded successfully! Preprocessing data...`);
         
         // Trigger a refresh of the dataset list
         window.dispatchEvent(new CustomEvent("dataset-uploaded"));
