@@ -1,6 +1,7 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Database } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import ChatInterface from "@/components/ChatInterface";
 
 const AIChatPage = () => {
@@ -32,8 +33,14 @@ const AIChatPage = () => {
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No dataset selected</p>
-              <p className="text-sm mt-2">Go to My Datasets and select a dataset to start chatting</p>
+              <p className="text-lg mb-2">No dataset selected</p>
+              <p className="text-sm mb-4">Select a dataset from My Datasets to start asking questions and generate insights</p>
+              <Link to="/dashboard/datasets">
+                <Button>
+                  <Database className="h-4 w-4 mr-2" />
+                  Go to My Datasets
+                </Button>
+              </Link>
             </div>
           )}
         </CardContent>

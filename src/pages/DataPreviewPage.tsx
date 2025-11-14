@@ -1,6 +1,7 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Database } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import DatasetPreview from "@/components/DatasetPreview";
 
 const DataPreviewPage = () => {
@@ -31,9 +32,15 @@ const DataPreviewPage = () => {
             <DatasetPreview datasetId={datasetId} />
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              <BarChart3 className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No dataset selected</p>
-              <p className="text-sm mt-2">Go to My Datasets and select a dataset to view its preview</p>
+              <Database className="h-16 w-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg mb-2">No dataset selected</p>
+              <p className="text-sm mb-4">Select a dataset from My Datasets to view its detailed statistics and column analysis</p>
+              <Link to="/dashboard/datasets">
+                <Button>
+                  <Database className="h-4 w-4 mr-2" />
+                  Go to My Datasets
+                </Button>
+              </Link>
             </div>
           )}
         </CardContent>
