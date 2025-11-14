@@ -6,40 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper function to properly parse CSV lines with quoted fields
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = "";
-  let inQuotes = false;
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-    
-    if (char === '"') {
-      // Handle escaped quotes ("")
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++; // Skip next quote
-      } else {
-        // Toggle quote state
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      // Field separator found outside quotes
-      result.push(current.trim());
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-  
-  // Add the last field
-  result.push(current.trim());
-  
-  return result;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -110,9 +76,7 @@ serve(async (req) => {
       const lines = fileContent.split("\n").filter(line => line.trim());
       if (lines.length > 0) {
         // Parse headers
-        console.log("First line (raw):", lines[0]);
-        headers = parseCSVLine(lines[0]);
-        console.log("Parsed headers:", headers);
+        headers = lines[0].split(",").map(col => col.trim().replace(/^"|"$/g, ""));
         
         // Calculate pagination
         totalRows = lines.length - 1;
@@ -121,13 +85,7 @@ serve(async (req) => {
         
         // Parse data rows for current page
         for (let i = startIdx; i < endIdx; i++) {
-          if (i === startIdx) {
-            console.log("First data row (raw):", lines[i]);
-          }
-          const row = parseCSVLine(lines[i]);
-          if (i === startIdx) {
-            console.log("Parsed first data row:", row);
-          }
+          const row = lines[i].split(",").map(cell => cell.trim().replace(/^"|"$/g, ""));
           rows.push(row);
         }
 
@@ -142,7 +100,7 @@ serve(async (req) => {
 
           // Collect all values for each column
           for (let i = 1; i < lines.length; i++) {
-            const row = parseCSVLine(lines[i]);
+            const row = lines[i].split(",").map(cell => cell.trim().replace(/^"|"$/g, ""));
             row.forEach((cell, idx) => {
               if (headers[idx]) {
                 columnData[headers[idx]].push(cell);
