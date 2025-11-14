@@ -62,6 +62,9 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
   const handleSelect = (datasetId: string) => {
     setSelectedId(datasetId);
     onSelect(datasetId);
+    
+    // Dispatch event for navigation updates
+    window.dispatchEvent(new CustomEvent("dataset-selected", { detail: { datasetId } }));
   };
 
   const handleReprocess = async (datasetId: string, datasetName: string, e: React.MouseEvent) => {
