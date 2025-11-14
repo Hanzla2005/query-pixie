@@ -110,7 +110,9 @@ serve(async (req) => {
       const lines = fileContent.split("\n").filter(line => line.trim());
       if (lines.length > 0) {
         // Parse headers
+        console.log("First line (raw):", lines[0]);
         headers = parseCSVLine(lines[0]);
+        console.log("Parsed headers:", headers);
         
         // Calculate pagination
         totalRows = lines.length - 1;
@@ -119,7 +121,13 @@ serve(async (req) => {
         
         // Parse data rows for current page
         for (let i = startIdx; i < endIdx; i++) {
+          if (i === startIdx) {
+            console.log("First data row (raw):", lines[i]);
+          }
           const row = parseCSVLine(lines[i]);
+          if (i === startIdx) {
+            console.log("Parsed first data row:", row);
+          }
           rows.push(row);
         }
 
