@@ -155,12 +155,14 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
                       {stats.histogram?.map((bin, idx) => {
                         const maxCount = Math.max(...(stats.histogram?.map(b => b.count) || [1]));
                         const height = (bin.count / maxCount) * 100;
+                        const binStart = bin.bin !== null && bin.bin !== undefined ? bin.bin.toFixed(1) : 'N/A';
+                        const binEnd = bin.binEnd !== null && bin.binEnd !== undefined ? bin.binEnd.toFixed(1) : 'N/A';
                         return (
                           <div
                             key={idx}
                             className="flex-1 bg-primary/70 hover:bg-primary transition-colors rounded-t"
                             style={{ height: `${height}%` }}
-                            title={`${bin.bin.toFixed(1)} - ${bin.binEnd.toFixed(1)}: ${bin.count}`}
+                            title={`${binStart} - ${binEnd}: ${bin.count}`}
                           />
                         );
                       })}
