@@ -108,7 +108,7 @@ const Dashboard = () => {
 
           {/* Right Column - Chat & Analysis */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg h-[calc(100vh-12rem)] flex flex-col">
+            <Card className="shadow-lg h-[calc(100vh)] flex flex-col">
               <CardHeader className="flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />

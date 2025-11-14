@@ -139,7 +139,7 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
   }
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="flex flex-col h-full gap-6 overflow-y-auto">
       {previewData.statistics && Object.keys(previewData.statistics).length > 0 && (
         <div className="space-y-6">
           {Object.entries(previewData.statistics).map(([column, stats]) => (
