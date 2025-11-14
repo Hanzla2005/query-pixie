@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Hash, Type } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DatasetPreviewProps {
@@ -81,51 +81,182 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
   return (
     <div className="space-y-6">
       {Object.entries(previewData.statistics).map(([column, stats]) => (
-        <Card key={column}>
-          <CardHeader>
-            <CardTitle className="text-base">{column}</CardTitle>
+        <Card key={column} className="overflow-hidden">
+          <CardHeader className="pb-4">
+            <div className="flex items-start gap-3">
+              {stats.type === 'numeric' ? (
+                <Hash className="h-5 w-5 mt-0.5 text-muted-foreground" />
+              ) : (
+                <Type className="h-5 w-5 mt-0.5 text-muted-foreground" />
+              )}
+              <div className="flex-1">
+                <CardTitle className="text-lg font-semibold">{column}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {stats.type === 'numeric' ? 'Length of the sepal (in cm)' : 'Species name'}
+                </p>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {stats.type === 'numeric' ? (
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className="grid lg:grid-cols-[1fr,400px] gap-8">
+                {/* Histogram */}
                 <div className="space-y-2">
-                  <div className="h-48 flex items-end gap-1">
+                  <div className="h-64 flex items-end gap-1 px-2">
                     {stats.histogram?.map((bin, idx) => (
                       <div
                         key={idx}
-                        className="flex-1 bg-primary/70 rounded-t"
+                        className="flex-1 bg-[hsl(var(--primary))] rounded-t transition-all hover:opacity-80"
                         style={{ height: `${(bin.count / Math.max(...(stats.histogram?.map(b => b.count) || [1]))) * 100}%` }}
                       />
                     ))}
                   </div>
+                  <div className="flex justify-between text-sm text-muted-foreground px-2">
+                    <span>{stats.min?.toFixed(1)}</span>
+                    <span>{stats.max?.toFixed(1)}</span>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex gap-1 h-2 rounded-full overflow-hidden">
+
+                {/* Statistics */}
+                <div className="space-y-4">
+                  {/* Data Quality */}
+                  <div className="flex gap-1 h-3 rounded-full overflow-hidden">
                     <div className="bg-green-500" style={{ width: `${stats.validPercent}%` }} />
+                    <div className="bg-gray-400" style={{ width: `${stats.mismatchedPercent}%` }} />
                     <div className="bg-orange-500" style={{ width: `${stats.missingPercent}%` }} />
                   </div>
-                  <div className="text-xs space-y-1">
-                    <div className="flex justify-between"><span>Mean</span><span>{stats.mean?.toFixed(2)}</span></div>
-                    <div className="flex justify-between"><span>Min</span><span>{stats.min?.toFixed(2)}</span></div>
-                    <div className="flex justify-between"><span>Max</span><span>{stats.max?.toFixed(2)}</span></div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-sm" />
+                        <span>Valid</span>
+                      </div>
+                      <div className="flex gap-4 text-right">
+                        <span className="font-medium">{stats.valid}</span>
+                        <span className="text-muted-foreground w-12">{stats.validPercent.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-gray-400 rounded-sm" />
+                        <span>Mismatched</span>
+                      </div>
+                      <div className="flex gap-4 text-right">
+                        <span className="font-medium">{stats.mismatched}</span>
+                        <span className="text-muted-foreground w-12">{stats.mismatchedPercent.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-orange-500 rounded-sm" />
+                        <span>Missing</span>
+                      </div>
+                      <div className="flex gap-4 text-right">
+                        <span className="font-medium">{stats.missing}</span>
+                        <span className="text-muted-foreground w-12">{stats.missingPercent.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 space-y-2 text-sm border-t">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Mean</span>
+                      <span>{stats.mean?.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Std. Deviation</span>
+                      <span>{stats.stdDev?.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 space-y-2 text-sm">
+                    <div className="font-medium">Quantiles</div>
+                    <div className="flex justify-between pl-4">
+                      <span>{stats.min?.toFixed(1)}</span>
+                      <span className="text-muted-foreground">Min</span>
+                    </div>
+                    <div className="flex justify-between pl-4">
+                      <span>{stats.q25?.toFixed(1)}</span>
+                      <span className="text-muted-foreground">25%</span>
+                    </div>
+                    <div className="flex justify-between pl-4">
+                      <span>{stats.median?.toFixed(1)}</span>
+                      <span className="text-muted-foreground">50%</span>
+                    </div>
+                    <div className="flex justify-between pl-4">
+                      <span>{stats.q75?.toFixed(1)}</span>
+                      <span className="text-muted-foreground">75%</span>
+                    </div>
+                    <div className="flex justify-between pl-4">
+                      <span>{stats.max?.toFixed(1)}</span>
+                      <span className="text-muted-foreground">Max</span>
+                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex gap-1 h-3 rounded-full overflow-hidden">
-                  <div className="bg-green-500" style={{ width: `${stats.validPercent}%` }} />
-                  <div className="bg-orange-500" style={{ width: `${stats.missingPercent}%` }} />
+              <div className="grid lg:grid-cols-[200px,1fr] gap-8">
+                {/* Unique Count */}
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="text-6xl font-bold">{stats.uniqueCount}</div>
+                  <div className="text-sm font-medium mt-2">unique values</div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-3xl font-bold">{stats.uniqueCount}</div>
-                    <div className="text-sm text-muted-foreground">unique values</div>
+
+                {/* Statistics */}
+                <div className="space-y-4">
+                  {/* Data Quality */}
+                  <div className="flex gap-1 h-3 rounded-full overflow-hidden">
+                    <div className="bg-green-500" style={{ width: `${stats.validPercent}%` }} />
+                    <div className="bg-gray-400" style={{ width: `${stats.mismatchedPercent}%` }} />
+                    <div className="bg-orange-500" style={{ width: `${stats.missingPercent}%` }} />
                   </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Most Common</div>
-                    <div className="font-medium">{stats.mostCommon}</div>
-                    <div className="text-xs text-muted-foreground">{stats.mostCommonPercent?.toFixed(0)}%</div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-sm" />
+                        <span>Valid</span>
+                      </div>
+                      <div className="flex gap-4 text-right">
+                        <span className="font-medium">{stats.valid}</span>
+                        <span className="text-muted-foreground w-12">{stats.validPercent.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-gray-400 rounded-sm" />
+                        <span>Mismatched</span>
+                      </div>
+                      <div className="flex gap-4 text-right">
+                        <span className="font-medium">{stats.mismatched}</span>
+                        <span className="text-muted-foreground w-12">{stats.mismatchedPercent.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-orange-500 rounded-sm" />
+                        <span>Missing</span>
+                      </div>
+                      <div className="flex gap-4 text-right">
+                        <span className="font-medium">{stats.missing}</span>
+                        <span className="text-muted-foreground w-12">{stats.missingPercent.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 space-y-2 text-sm border-t">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Unique</span>
+                      <span>{stats.uniqueCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Most Common</span>
+                      <div className="text-right">
+                        <div>{stats.mostCommon}</div>
+                        <div className="text-muted-foreground text-xs">{stats.mostCommonPercent?.toFixed(0)}%</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
