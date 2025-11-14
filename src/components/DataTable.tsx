@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -96,10 +96,10 @@ const DataTable = ({ datasetId }: DataTableProps) => {
   return (
     <div className="space-y-4">
       <ScrollArea className="h-[600px] w-full rounded-md border">
-        <Table>
+        <Table className="min-w-max">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12 sticky left-0 bg-background">#</TableHead>
+              <TableHead className="w-12 sticky left-0 bg-background z-10">#</TableHead>
               {data.headers.map((column, idx) => (
                 <TableHead key={idx} className="min-w-[150px]">
                   {column}
@@ -110,7 +110,7 @@ const DataTable = ({ datasetId }: DataTableProps) => {
           <TableBody>
             {data.rows.map((row, rowIdx) => (
               <TableRow key={rowIdx}>
-                <TableCell className="font-medium sticky left-0 bg-background">
+                <TableCell className="font-medium sticky left-0 bg-background z-10">
                   {startRow + rowIdx}
                 </TableCell>
                 {row.map((cell, cellIdx) => (
@@ -122,6 +122,7 @@ const DataTable = ({ datasetId }: DataTableProps) => {
             ))}
           </TableBody>
         </Table>
+        <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
       {/* Pagination Controls */}
