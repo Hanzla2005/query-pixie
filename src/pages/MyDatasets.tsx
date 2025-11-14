@@ -19,17 +19,21 @@ const MyDatasets = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-2">My Datasets</h2>
-        <p className="text-muted-foreground">Upload and manage your datasets</p>
+        <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          My Datasets
+        </h2>
+        <p className="text-muted-foreground">Upload and manage your datasets with ease</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Upload & Datasets */}
         <div className="lg:col-span-1 space-y-6">
-          <Card className="shadow-lg">
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20 bg-gradient-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Upload className="h-5 w-5 text-primary" />
+                </div>
                 Upload Dataset
               </CardTitle>
               <CardDescription>Drop your CSV or XLSX file here</CardDescription>
@@ -39,10 +43,12 @@ const MyDatasets = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
                 Your Datasets
               </CardTitle>
               <CardDescription>Recent uploads and analyses</CardDescription>
@@ -55,12 +61,14 @@ const MyDatasets = () => {
 
         {/* Right Column - Data Table */}
         <div className="lg:col-span-2">
-          <Card className="shadow-lg h-full">
+          <Card className="shadow-xl h-full border-primary/20 bg-gradient-card">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <TableIcon className="h-5 w-5" />
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <TableIcon className="h-5 w-5 text-primary" />
+                    </div>
                     Dataset View
                   </CardTitle>
                   <CardDescription>
@@ -74,6 +82,7 @@ const MyDatasets = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="hover:bg-primary/10 hover:text-primary hover:border-primary transition-all"
                       onClick={() => navigate(`/dashboard/preview?datasetId=${selectedDataset}`)}
                     >
                       <BarChart3 className="h-4 w-4 mr-2" />
@@ -82,6 +91,7 @@ const MyDatasets = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="hover:bg-primary/10 hover:text-primary hover:border-primary transition-all"
                       onClick={() => navigate(`/dashboard/chat?datasetId=${selectedDataset}`)}
                     >
                       <MessageSquare className="h-4 w-4 mr-2" />
@@ -95,9 +105,12 @@ const MyDatasets = () => {
               {selectedDataset ? (
                 <DataTable datasetId={selectedDataset} />
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <TableIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg">Select a dataset from the list to view its data</p>
+                <div className="text-center py-20 text-muted-foreground">
+                  <div className="inline-block p-6 rounded-full bg-primary/5 mb-4">
+                    <TableIcon className="h-16 w-16 text-primary/50" />
+                  </div>
+                  <p className="text-lg font-medium">Select a dataset from the list to view its data</p>
+                  <p className="text-sm mt-2">Your data tables will appear here</p>
                 </div>
               )}
             </CardContent>
