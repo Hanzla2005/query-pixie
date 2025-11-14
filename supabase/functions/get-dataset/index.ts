@@ -70,7 +70,7 @@ serve(async (req) => {
     let rows: string[][] = [];
     let headers: string[] = [];
     let totalRows = 0;
-    let statistics: Record<string, { min: number; max: number; mean: number }> = {};
+    let statistics: Record<string, any> = {};
 
     if (fileExt === "csv") {
       const lines = fileContent.split("\n").filter(line => line.trim());
@@ -91,32 +91,106 @@ serve(async (req) => {
 
         // Calculate statistics for numeric columns (only on first page request)
         if (page === 1) {
-          const columnData: Record<string, number[]> = {};
+          const columnData: Record<string, (number | string)[]> = {};
           
           // Initialize arrays for each column
           headers.forEach(header => {
             columnData[header] = [];
           });
 
-          // Collect numeric values for each column
+          // Collect all values for each column
           for (let i = 1; i < lines.length; i++) {
             const row = lines[i].split(",").map(cell => cell.trim().replace(/^"|"$/g, ""));
             row.forEach((cell, idx) => {
-              const value = parseFloat(cell);
-              if (!isNaN(value) && headers[idx]) {
-                columnData[headers[idx]].push(value);
+              if (headers[idx]) {
+                columnData[headers[idx]].push(cell);
               }
             });
           }
 
-          // Calculate min, max, mean for numeric columns
+          // Calculate comprehensive statistics for each column
           Object.keys(columnData).forEach(column => {
-            const values = columnData[column];
-            if (values.length > 0) {
+            const allValues = columnData[column];
+            const totalCount = allValues.length;
+            
+            // Count valid, missing, mismatched
+            let validCount = 0;
+            let missingCount = 0;
+            const numericValues: number[] = [];
+            
+            allValues.forEach(cell => {
+              const cellStr = String(cell);
+              if (!cellStr || cellStr === '') {
+                missingCount++;
+              } else {
+                const numValue = parseFloat(cellStr);
+                if (!isNaN(numValue)) {
+                  numericValues.push(numValue);
+                  validCount++;
+                }
+              }
+            });
+            
+            const mismatchedCount = totalCount - validCount - missingCount;
+            
+            // Calculate statistics for numeric columns
+            if (numericValues.length > 0) {
+              const sorted = [...numericValues].sort((a, b) => a - b);
+              const sum = numericValues.reduce((acc, val) => acc + val, 0);
+              const mean = sum / numericValues.length;
+              
+              // Calculate standard deviation
+              const variance = numericValues.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numericValues.length;
+              const stdDev = Math.sqrt(variance);
+              
+              // Calculate quantiles
+              const getQuantile = (arr: number[], q: number) => {
+                const pos = (arr.length - 1) * q;
+                const base = Math.floor(pos);
+                const rest = pos - base;
+                if (arr[base + 1] !== undefined) {
+                  return arr[base] + rest * (arr[base + 1] - arr[base]);
+                } else {
+                  return arr[base];
+                }
+              };
+              
+              const min = sorted[0];
+              const q25 = getQuantile(sorted, 0.25);
+              const median = getQuantile(sorted, 0.5);
+              const q75 = getQuantile(sorted, 0.75);
+              const max = sorted[sorted.length - 1];
+              
+              // Create histogram bins (10 bins)
+              const binCount = 10;
+              const binSize = (max - min) / binCount;
+              const histogram = Array(binCount).fill(0);
+              
+              numericValues.forEach(val => {
+                const binIndex = Math.min(Math.floor((val - min) / binSize), binCount - 1);
+                histogram[binIndex]++;
+              });
+              
               statistics[column] = {
-                min: Math.min(...values),
-                max: Math.max(...values),
-                mean: values.reduce((a, b) => a + b, 0) / values.length
+                type: 'numeric',
+                valid: validCount,
+                mismatched: mismatchedCount,
+                missing: missingCount,
+                validPercent: (validCount / totalCount) * 100,
+                mismatchedPercent: (mismatchedCount / totalCount) * 100,
+                missingPercent: (missingCount / totalCount) * 100,
+                mean,
+                stdDev,
+                min,
+                q25,
+                median,
+                q75,
+                max,
+                histogram: histogram.map((count, idx) => ({
+                  bin: min + (idx * binSize),
+                  binEnd: min + ((idx + 1) * binSize),
+                  count
+                }))
               };
             }
           });
