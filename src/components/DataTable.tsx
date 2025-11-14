@@ -17,7 +17,7 @@ interface DataTableProps {
 }
 
 interface DatasetData {
-  columns: string[];
+  headers: string[];
   rows: any[][];
 }
 
@@ -65,7 +65,7 @@ const DataTable = ({ datasetId }: DataTableProps) => {
     );
   }
 
-  if (!data || !data.columns || data.columns.length === 0) {
+  if (!data || !data.headers || data.headers.length === 0) {
     console.log("DataTable: Showing 'No data available'", { data });
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -80,7 +80,7 @@ const DataTable = ({ datasetId }: DataTableProps) => {
         <TableHeader>
           <TableRow>
             <TableHead className="w-12 sticky left-0 bg-background">#</TableHead>
-            {data.columns.map((column, idx) => (
+            {data.headers.map((column, idx) => (
               <TableHead key={idx} className="min-w-[150px]">
                 {column}
               </TableHead>
