@@ -166,8 +166,8 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
                       })}
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{stats.min?.toFixed(1)}</span>
-                      <span>{stats.max?.toFixed(1)}</span>
+                      <span>{stats.min !== null && stats.min !== undefined ? stats.min.toFixed(1) : 'N/A'}</span>
+                      <span>{stats.max !== null && stats.max !== undefined ? stats.max.toFixed(1) : 'N/A'}</span>
                     </div>
                   </div>
 
@@ -227,11 +227,11 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
                     <div className="space-y-2 pt-2 border-t border-border">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Mean</span>
-                        <span className="font-medium">{stats.mean?.toFixed(2)}</span>
+                        <span className="font-medium">{stats.mean !== null && stats.mean !== undefined ? stats.mean.toFixed(2) : 'N/A'}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Std. Deviation</span>
-                        <span className="font-medium">{stats.stdDev?.toFixed(2)}</span>
+                        <span className="font-medium">{stats.stdDev !== null && stats.stdDev !== undefined ? stats.stdDev.toFixed(2) : 'N/A'}</span>
                       </div>
                     </div>
 
@@ -241,35 +241,35 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground"></span>
                         <div className="flex gap-8">
-                          <span className="font-medium">{stats.min?.toFixed(0)}</span>
+                          <span className="font-medium">{stats.min !== null && stats.min !== undefined ? stats.min.toFixed(0) : 'N/A'}</span>
                           <span className="text-muted-foreground">Min</span>
                         </div>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground"></span>
                         <div className="flex gap-8">
-                          <span className="font-medium">{stats.q25?.toFixed(0)}</span>
+                          <span className="font-medium">{stats.q25 !== null && stats.q25 !== undefined ? stats.q25.toFixed(0) : 'N/A'}</span>
                           <span className="text-muted-foreground">25%</span>
                         </div>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground"></span>
                         <div className="flex gap-8">
-                          <span className="font-medium">{stats.median?.toFixed(0)}</span>
+                          <span className="font-medium">{stats.median !== null && stats.median !== undefined ? stats.median.toFixed(0) : 'N/A'}</span>
                           <span className="text-muted-foreground">50%</span>
                         </div>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground"></span>
                         <div className="flex gap-8">
-                          <span className="font-medium">{stats.q75?.toFixed(0)}</span>
+                          <span className="font-medium">{stats.q75 !== null && stats.q75 !== undefined ? stats.q75.toFixed(0) : 'N/A'}</span>
                           <span className="text-muted-foreground">75%</span>
                         </div>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground"></span>
                         <div className="flex gap-8">
-                          <span className="font-medium">{stats.max?.toFixed(0)}</span>
+                          <span className="font-medium">{stats.max !== null && stats.max !== undefined ? stats.max.toFixed(0) : 'N/A'}</span>
                           <span className="text-muted-foreground">Max</span>
                         </div>
                       </div>
