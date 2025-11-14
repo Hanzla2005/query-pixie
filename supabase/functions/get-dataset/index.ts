@@ -117,6 +117,7 @@ serve(async (req) => {
             let validCount = 0;
             let missingCount = 0;
             const numericValues: number[] = [];
+            const stringValues: string[] = [];
             
             allValues.forEach(cell => {
               const cellStr = String(cell);
@@ -127,6 +128,9 @@ serve(async (req) => {
                 if (!isNaN(numValue)) {
                   numericValues.push(numValue);
                   validCount++;
+                } else {
+                  stringValues.push(cellStr);
+                  validCount++;
                 }
               }
             });
@@ -134,7 +138,7 @@ serve(async (req) => {
             const mismatchedCount = totalCount - validCount - missingCount;
             
             // Calculate statistics for numeric columns
-            if (numericValues.length > 0) {
+            if (numericValues.length > 0 && numericValues.length > stringValues.length) {
               const sorted = [...numericValues].sort((a, b) => a - b);
               const sum = numericValues.reduce((acc, val) => acc + val, 0);
               const mean = sum / numericValues.length;
@@ -191,6 +195,40 @@ serve(async (req) => {
                   binEnd: min + ((idx + 1) * binSize),
                   count
                 }))
+              };
+            } else if (stringValues.length > 0) {
+              // Calculate statistics for categorical columns
+              const uniqueValues = new Set(stringValues);
+              const valueCounts: Record<string, number> = {};
+              
+              stringValues.forEach(val => {
+                valueCounts[val] = (valueCounts[val] || 0) + 1;
+              });
+              
+              // Find most common value
+              let mostCommon = '';
+              let maxCount = 0;
+              Object.entries(valueCounts).forEach(([val, count]) => {
+                if (count > maxCount) {
+                  maxCount = count;
+                  mostCommon = val;
+                }
+              });
+              
+              const mostCommonPercent = (maxCount / stringValues.length) * 100;
+              
+              statistics[column] = {
+                type: 'categorical',
+                valid: validCount,
+                mismatched: mismatchedCount,
+                missing: missingCount,
+                validPercent: (validCount / totalCount) * 100,
+                mismatchedPercent: (mismatchedCount / totalCount) * 100,
+                missingPercent: (missingCount / totalCount) * 100,
+                uniqueCount: uniqueValues.size,
+                mostCommon,
+                mostCommonCount: maxCount,
+                mostCommonPercent
               };
             }
           });
