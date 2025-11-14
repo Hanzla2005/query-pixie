@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,18 +21,23 @@ interface DataTableProps {
 interface DatasetData {
   headers: string[];
   rows: any[][];
+  totalRows: number;
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 const DataTable = ({ datasetId }: DataTableProps) => {
   const [data, setData] = useState<DatasetData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchData = async () => {
+  const fetchData = async (page: number) => {
     setLoading(true);
-    console.log("DataTable: Fetching data for datasetId:", datasetId);
+    console.log("DataTable: Fetching data for datasetId:", datasetId, "page:", page);
     try {
       const { data: result, error } = await supabase.functions.invoke("get-dataset", {
-        body: { datasetId, limit: 100 },
+        body: { datasetId, page, pageSize: 50 },
       });
 
       console.log("DataTable: Response received", { result, error });
@@ -52,9 +59,19 @@ const DataTable = ({ datasetId }: DataTableProps) => {
 
   useEffect(() => {
     if (datasetId) {
-      fetchData();
+      fetchData(currentPage);
     }
-  }, [datasetId]);
+  }, [datasetId, currentPage]);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    if (data && currentPage < data.totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
 
   if (loading) {
     return (
@@ -74,35 +91,69 @@ const DataTable = ({ datasetId }: DataTableProps) => {
     );
   }
 
+  const startRow = (currentPage - 1) * (data?.pageSize || 50) + 1;
+
   return (
-    <ScrollArea className="h-[600px] w-full rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12 sticky left-0 bg-background">#</TableHead>
-            {data.headers.map((column, idx) => (
-              <TableHead key={idx} className="min-w-[150px]">
-                {column}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.rows.map((row, rowIdx) => (
-            <TableRow key={rowIdx}>
-              <TableCell className="font-medium sticky left-0 bg-background">
-                {rowIdx + 1}
-              </TableCell>
-              {row.map((cell, cellIdx) => (
-                <TableCell key={cellIdx}>
-                  {cell !== null && cell !== undefined ? String(cell) : "-"}
-                </TableCell>
+    <div className="space-y-4">
+      <ScrollArea className="h-[600px] w-full rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12 sticky left-0 bg-background">#</TableHead>
+              {data.headers.map((column, idx) => (
+                <TableHead key={idx} className="min-w-[150px]">
+                  {column}
+                </TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </ScrollArea>
+          </TableHeader>
+          <TableBody>
+            {data.rows.map((row, rowIdx) => (
+              <TableRow key={rowIdx}>
+                <TableCell className="font-medium sticky left-0 bg-background">
+                  {startRow + rowIdx}
+                </TableCell>
+                {row.map((cell, cellIdx) => (
+                  <TableCell key={cellIdx}>
+                    {cell !== null && cell !== undefined ? String(cell) : "-"}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ScrollArea>
+
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between px-2">
+        <div className="text-sm text-muted-foreground">
+          Showing {startRow} to {Math.min(startRow + data.rows.length - 1, data.totalRows)} of {data.totalRows} rows
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous
+          </Button>
+          <div className="text-sm">
+            Page {currentPage} of {data.totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={currentPage === data.totalPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
