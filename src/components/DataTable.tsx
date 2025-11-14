@@ -27,16 +27,23 @@ const DataTable = ({ datasetId }: DataTableProps) => {
 
   const fetchData = async () => {
     setLoading(true);
+    console.log("DataTable: Fetching data for datasetId:", datasetId);
     try {
       const { data: result, error } = await supabase.functions.invoke("get-dataset", {
         body: { datasetId, limit: 100 },
       });
 
-      if (error) throw error;
+      console.log("DataTable: Response received", { result, error });
+
+      if (error) {
+        console.error("DataTable: Error from edge function:", error);
+        throw error;
+      }
       
+      console.log("DataTable: Setting data:", result);
       setData(result);
     } catch (error) {
-      console.error("Error fetching dataset:", error);
+      console.error("DataTable: Error fetching dataset:", error);
       toast.error("Failed to load dataset");
     } finally {
       setLoading(false);
@@ -59,6 +66,7 @@ const DataTable = ({ datasetId }: DataTableProps) => {
   }
 
   if (!data || !data.columns || data.columns.length === 0) {
+    console.log("DataTable: Showing 'No data available'", { data });
     return (
       <div className="text-center py-8 text-muted-foreground">
         No data available
