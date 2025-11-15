@@ -52,9 +52,6 @@ const Index = () => {
                   Start Analyzing Free
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-lg border-primary-foreground/30 hover:bg-primary-foreground/10 backdrop-blur-sm">
-                Watch Demo
-              </Button>
             </div>
           </div>
         </div>

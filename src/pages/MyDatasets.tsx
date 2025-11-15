@@ -25,7 +25,7 @@ const MyDatasets = () => {
         <p className="text-muted-foreground">Upload and manage your datasets with ease</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         {/* Left Column - Upload & Datasets */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20 bg-gradient-card">
@@ -72,8 +72,8 @@ const MyDatasets = () => {
                     Dataset View
                   </CardTitle>
                   <CardDescription>
-                    {selectedDataset 
-                      ? "View and explore your dataset rows" 
+                    {selectedDataset
+                      ? "View and explore your dataset rows"
                       : "Select a dataset to view its contents"}
                   </CardDescription>
                 </div>
@@ -103,7 +103,9 @@ const MyDatasets = () => {
             </CardHeader>
             <CardContent>
               {selectedDataset ? (
-                <DataTable datasetId={selectedDataset} />
+                <div className="w-full overflow-x-auto">
+                  <DataTable datasetId={selectedDataset} />
+                </div>
               ) : (
                 <div className="text-center py-20 text-muted-foreground">
                   <div className="inline-block p-6 rounded-full bg-primary/5 mb-4">
