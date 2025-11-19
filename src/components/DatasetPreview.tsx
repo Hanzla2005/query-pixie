@@ -91,9 +91,6 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
               )}
               <div className="flex-1">
                 <CardTitle className="text-lg font-semibold">{column}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {stats.type === 'numeric' ? 'Length of the sepal (in cm)' : 'Species name'}
-                </p>
               </div>
             </div>
           </CardHeader>
