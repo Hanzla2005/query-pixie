@@ -59,11 +59,9 @@ serve(async (req) => {
 
     const text = await fileData.text();
     const rows = text.split('\n').filter(r => r.trim());
-    const headers = rows[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
     
-    // Parse CSV properly handling quoted values
-    const sampleRows = rows.slice(1, 101).map(row => {
-      // Simple CSV parser that handles quoted values
+    // CSV parser function that handles quoted values
+    const parseCSVRow = (row: string): string[] => {
       const values: string[] = [];
       let current = '';
       let inQuotes = false;
@@ -79,14 +77,25 @@ serve(async (req) => {
           current += char;
         }
       }
-      values.push(current.trim()); // Push the last value
-      
+      values.push(current.trim());
+      return values;
+    };
+    
+    // Parse header row
+    const headers = parseCSVRow(rows[0]);
+    console.log("CSV Headers:", headers);
+    
+    // Parse data rows
+    const sampleRows = rows.slice(1, 101).map(row => {
+      const values = parseCSVRow(row);
       const obj: any = {};
       headers.forEach((header, i) => {
         obj[header] = values[i] || '';
       });
       return obj;
     });
+    
+    console.log("Sample row example:", sampleRows[0]);
 
     console.log(`Analyzing ${sampleRows.length} sample rows from dataset`);
 
@@ -95,12 +104,17 @@ serve(async (req) => {
     dataset.columns.forEach((col: any) => {
       if (col.type === 'number') {
         const values = sampleRows
-          .map(row => parseFloat(row[col.name]))
+          .map(row => {
+            const val = row[col.name];
+            return parseFloat(val);
+          })
           .filter(v => !isNaN(v));
+        
+        console.log(`Column ${col.name}: Found ${values.length} numeric values`);
         
         if (values.length > 0) {
           // Create histogram bins
-          const bins = 8;
+          const bins = 10;
           const min = Math.min(...values);
           const max = Math.max(...values);
           const binSize = (max - min) / bins;
@@ -115,6 +129,10 @@ serve(async (req) => {
             range: `${(min + i * binSize).toFixed(1)}-${(min + (i + 1) * binSize).toFixed(1)}`,
             count
           }));
+          
+          console.log(`Distribution for ${col.name}:`, distributions[col.name]);
+        } else {
+          console.log(`No valid numeric values found for ${col.name}`);
         }
       }
     });
