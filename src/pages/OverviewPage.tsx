@@ -11,7 +11,16 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import DatasetSelectorDialog from "@/components/DatasetSelectorDialog";
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(var(--chart-6))',
+  'hsl(var(--chart-7))',
+  'hsl(var(--chart-8))',
+];
 
 const OverviewPage = () => {
   const [searchParams] = useSearchParams();
