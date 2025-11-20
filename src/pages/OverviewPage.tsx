@@ -40,123 +40,80 @@ const OverviewPage = () => {
   const fetchDatasetOverview = async () => {
     try {
       setLoading(true);
+      toast.loading("Analyzing dataset with AI...");
 
-      // Fetch dataset info
-      const { data: datasetInfo, error: datasetError } = await supabase
-        .from("datasets")
-        .select("*")
-        .eq("id", datasetId)
-        .single();
-
-      if (datasetError) throw datasetError;
-      setDataset(datasetInfo);
-
-      // Fetch dataset data
-      const { data: datasetData, error: dataError } = await supabase.functions.invoke(
-        "get-dataset",
+      // Call AI-powered overview generation
+      const { data: overviewData, error: overviewError } = await supabase.functions.invoke(
+        "generate-overview",
         { body: { datasetId } }
       );
 
-      if (dataError) throw dataError;
+      if (overviewError) {
+        console.error("Overview generation error:", overviewError);
+        throw overviewError;
+      }
 
-      const parsedData = datasetData.data;
-      setData(parsedData);
+      console.log("AI Overview data:", overviewData);
 
-      // Calculate statistics
-      calculateStatistics(parsedData, datasetInfo.columns);
+      setDataset(overviewData.dataset);
+      setData(overviewData.sampleData || []);
+
+      // Transform AI insights into statistics format
+      const insights = overviewData.insights;
+      const stats: any = {
+        totalRows: overviewData.dataset.row_count,
+        summary: insights.summary,
+        keyFindings: insights.keyFindings || [],
+        columns: {},
+        distributions: {},
+        trends: {}
+      };
+
+      // Process numeric insights
+      insights.numericInsights?.forEach((insight: any) => {
+        stats.columns[insight.columnName] = {
+          type: 'numeric',
+          mean: insight.mean,
+          median: insight.median,
+          min: insight.min,
+          max: insight.max,
+          trend: insight.trend,
+          description: insight.description
+        };
+
+        // Create distribution data for visualization
+        if (insight.visualizationType === 'bar') {
+          stats.distributions[insight.columnName] = insight.distribution || [];
+        }
+        if (insight.visualizationType === 'line' || insight.visualizationType === 'area') {
+          stats.trends[insight.columnName] = insight.trendData || [];
+        }
+      });
+
+      // Process categorical insights
+      insights.categoricalInsights?.forEach((insight: any) => {
+        stats.columns[insight.columnName] = {
+          type: 'categorical',
+          unique: insight.uniqueCount,
+          topValues: insight.topValues,
+          description: insight.description
+        };
+
+        stats.distributions[insight.columnName] = insight.topValues || [];
+      });
+
+      setStatistics(stats);
+      toast.dismiss();
+      toast.success("Dataset analysis completed!");
     } catch (error) {
       console.error("Error fetching dataset overview:", error);
+      toast.dismiss();
       toast.error("Failed to load dataset overview");
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateStatistics = (data: any[], columns: any) => {
-    const stats: any = {
-      totalRows: data.length,
-      columns: {},
-      distributions: {},
-      trends: {},
-      correlations: []
-    };
-
-    if (!data.length || !columns) return;
-
-    const columnNames = Object.keys(data[0]);
-    
-    columnNames.forEach(col => {
-      const values = data.map(row => row[col]).filter(v => v !== null && v !== undefined && v !== '');
-      const columnInfo = columns.find((c: any) => c.name === col);
-      
-      if (columnInfo?.type === 'number') {
-        const numericValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
-        const sum = numericValues.reduce((a, b) => a + b, 0);
-        const mean = sum / numericValues.length;
-        const sorted = [...numericValues].sort((a, b) => a - b);
-        
-        stats.columns[col] = {
-          type: 'numeric',
-          count: numericValues.length,
-          mean: mean.toFixed(2),
-          median: sorted[Math.floor(sorted.length / 2)]?.toFixed(2),
-          min: Math.min(...numericValues).toFixed(2),
-          max: Math.max(...numericValues).toFixed(2),
-          stdDev: Math.sqrt(numericValues.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / numericValues.length).toFixed(2)
-        };
-
-        // Distribution for numeric columns (histogram-like)
-        const bins = 10;
-        const min = Math.min(...numericValues);
-        const max = Math.max(...numericValues);
-        const binSize = (max - min) / bins;
-        const distribution = Array(bins).fill(0);
-        
-        numericValues.forEach(v => {
-          const binIndex = Math.min(Math.floor((v - min) / binSize), bins - 1);
-          distribution[binIndex]++;
-        });
-
-        stats.distributions[col] = distribution.map((count, i) => ({
-          range: `${(min + i * binSize).toFixed(1)}-${(min + (i + 1) * binSize).toFixed(1)}`,
-          count
-        }));
-
-        // Trend analysis (if there's an index or row number)
-        if (numericValues.length > 10) {
-          stats.trends[col] = numericValues.slice(0, Math.min(50, numericValues.length)).map((v, i) => ({
-            index: i + 1,
-            value: v
-          }));
-        }
-      } else {
-        // Categorical analysis
-        const valueCounts: { [key: string]: number } = {};
-        values.forEach(v => {
-          const key = String(v).substring(0, 50); // Limit length
-          valueCounts[key] = (valueCounts[key] || 0) + 1;
-        });
-
-        const sortedValues = Object.entries(valueCounts)
-          .sort(([, a], [, b]) => b - a)
-          .slice(0, 10);
-
-        stats.columns[col] = {
-          type: 'categorical',
-          count: values.length,
-          unique: Object.keys(valueCounts).length,
-          topValues: sortedValues
-        };
-
-        stats.distributions[col] = sortedValues.map(([value, count]) => ({
-          name: value.length > 20 ? value.substring(0, 20) + '...' : value,
-          value: count
-        }));
-      }
-    });
-
-    setStatistics(stats);
-  };
 
   const downloadReport = async () => {
     if (!reportRef.current) return;
@@ -335,12 +292,43 @@ const OverviewPage = () => {
 
       {/* Report Content */}
       <div ref={reportRef} className="space-y-6">
+        {/* AI Summary */}
+        {statistics.summary && (
+          <Card className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                <CardTitle>AI-Generated Summary</CardTitle>
+              </div>
+              <CardDescription>
+                Comprehensive overview generated by AI analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-foreground leading-relaxed">{statistics.summary}</p>
+              {statistics.keyFindings && statistics.keyFindings.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-semibold mb-3">Key Findings:</h4>
+                  <ul className="space-y-2">
+                    {statistics.keyFindings.map((finding: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-primary mt-1">•</span>
+                        <span>{finding}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Summary Statistics */}
         <Card className="report-section border-primary/20 shadow-lg">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              <CardTitle>Summary Statistics</CardTitle>
+              <CardTitle>Dataset Metrics</CardTitle>
             </div>
             <CardDescription>
               Overview of key metrics and data characteristics
@@ -350,11 +338,11 @@ const OverviewPage = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                 <p className="text-sm text-muted-foreground">Total Rows</p>
-                <p className="text-2xl font-bold text-primary">{statistics.totalRows.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-primary">{statistics.totalRows?.toLocaleString() || 0}</p>
               </div>
               <div className="p-4 rounded-lg bg-secondary/5 border border-secondary/20">
                 <p className="text-sm text-muted-foreground">Columns</p>
-                <p className="text-2xl font-bold">{Object.keys(statistics.columns).length}</p>
+                <p className="text-2xl font-bold">{Object.keys(statistics.columns || {}).length}</p>
               </div>
               <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
                 <p className="text-sm text-muted-foreground">Numeric Columns</p>
@@ -368,22 +356,52 @@ const OverviewPage = () => {
           </CardContent>
         </Card>
 
-        {/* Numeric Distributions */}
+        {/* Numeric Insights */}
         {numericColumns.map(([colName, colInfo]: any) => (
-          statistics.distributions[colName] && (
-            <Card key={`dist-${colName}`} className="report-section border-primary/20 shadow-lg">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  <CardTitle>{colName} - Distribution</CardTitle>
+          <Card key={`numeric-${colName}`} className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                <CardTitle>{colName} - Analysis</CardTitle>
+              </div>
+              <CardDescription>
+                {colInfo.description || `Statistical analysis for ${colName}`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                {colInfo.mean && (
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <p className="text-xs text-muted-foreground">Mean</p>
+                    <p className="text-lg font-bold">{typeof colInfo.mean === 'number' ? colInfo.mean.toFixed(2) : colInfo.mean}</p>
+                  </div>
+                )}
+                {colInfo.median && (
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <p className="text-xs text-muted-foreground">Median</p>
+                    <p className="text-lg font-bold">{typeof colInfo.median === 'number' ? colInfo.median.toFixed(2) : colInfo.median}</p>
+                  </div>
+                )}
+                {colInfo.min && (
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <p className="text-xs text-muted-foreground">Min</p>
+                    <p className="text-lg font-bold">{typeof colInfo.min === 'number' ? colInfo.min.toFixed(2) : colInfo.min}</p>
+                  </div>
+                )}
+                {colInfo.max && (
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <p className="text-xs text-muted-foreground">Max</p>
+                    <p className="text-lg font-bold">{typeof colInfo.max === 'number' ? colInfo.max.toFixed(2) : colInfo.max}</p>
+                  </div>
+                )}
+              </div>
+              {colInfo.trend && (
+                <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+                  <p className="text-sm"><span className="font-semibold">Trend:</span> {colInfo.trend}</p>
                 </div>
-                <CardDescription>
-                  Statistical distribution showing the frequency of values across different ranges. 
-                  Mean: {colInfo.mean}, Median: {colInfo.median}, Std Dev: {colInfo.stdDev}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+              )}
+              {statistics.distributions[colName] && (
+                <ResponsiveContainer width="100%" height={300} className="mt-6">
                   <BarChart data={statistics.distributions[colName]}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="range" stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -398,9 +416,9 @@ const OverviewPage = () => {
                     <Bar dataKey="count" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )
+              )}
+            </CardContent>
+          </Card>
         ))}
 
         {/* Trend Analysis */}
@@ -450,7 +468,7 @@ const OverviewPage = () => {
           )
         ))}
 
-        {/* Categorical Distributions */}
+        {/* Categorical Insights */}
         {categoricalColumns.slice(0, 4).map(([colName, colInfo]: any) => (
           statistics.distributions[colName] && (
             <Card key={`cat-${colName}`} className="report-section border-primary/20 shadow-lg">
@@ -460,8 +478,8 @@ const OverviewPage = () => {
                   <CardTitle>{colName} - Category Distribution</CardTitle>
                 </div>
                 <CardDescription>
-                  Breakdown of categorical values showing the proportion of each category. 
-                  Total unique values: {colInfo.unique}, Showing top {statistics.distributions[colName].length} categories.
+                  {colInfo.description || `Distribution showing the proportion of each category in ${colName}.`}
+                  {colInfo.unique && ` Total unique values: ${colInfo.unique}`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -476,7 +494,7 @@ const OverviewPage = () => {
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                         outerRadius={80}
                         fill="hsl(var(--primary))"
-                        dataKey="value"
+                        dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"}
                       >
                         {statistics.distributions[colName].map((_: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -503,7 +521,7 @@ const OverviewPage = () => {
                           borderRadius: '8px'
                         }} 
                       />
-                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
+                      <Bar dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"} fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -513,44 +531,42 @@ const OverviewPage = () => {
         ))}
 
         {/* Detailed Statistics Table */}
-        <Card className="report-section border-primary/20 shadow-lg">
-          <CardHeader>
-            <CardTitle>Detailed Column Statistics</CardTitle>
-            <CardDescription>
-              Comprehensive statistical summary for all numeric columns in the dataset
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-3 font-semibold">Column</th>
-                    <th className="text-right p-3 font-semibold">Count</th>
-                    <th className="text-right p-3 font-semibold">Mean</th>
-                    <th className="text-right p-3 font-semibold">Median</th>
-                    <th className="text-right p-3 font-semibold">Min</th>
-                    <th className="text-right p-3 font-semibold">Max</th>
-                    <th className="text-right p-3 font-semibold">Std Dev</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {numericColumns.map(([colName, colInfo]: any) => (
-                    <tr key={colName} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="p-3 font-medium">{colName}</td>
-                      <td className="text-right p-3">{colInfo.count.toLocaleString()}</td>
-                      <td className="text-right p-3">{colInfo.mean}</td>
-                      <td className="text-right p-3">{colInfo.median}</td>
-                      <td className="text-right p-3">{colInfo.min}</td>
-                      <td className="text-right p-3">{colInfo.max}</td>
-                      <td className="text-right p-3">{colInfo.stdDev}</td>
+        {numericColumns.length > 0 && (
+          <Card className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <CardTitle>Detailed Column Statistics</CardTitle>
+              <CardDescription>
+                Comprehensive statistical summary for all numeric columns in the dataset
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-3 font-semibold">Column</th>
+                      <th className="text-right p-3 font-semibold">Mean</th>
+                      <th className="text-right p-3 font-semibold">Median</th>
+                      <th className="text-right p-3 font-semibold">Min</th>
+                      <th className="text-right p-3 font-semibold">Max</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {numericColumns.map(([colName, colInfo]: any) => (
+                      <tr key={colName} className="border-b border-border/50 hover:bg-muted/30">
+                        <td className="p-3 font-medium">{colName}</td>
+                        <td className="text-right p-3">{typeof colInfo.mean === 'number' ? colInfo.mean.toFixed(2) : colInfo.mean || '-'}</td>
+                        <td className="text-right p-3">{typeof colInfo.median === 'number' ? colInfo.median.toFixed(2) : colInfo.median || '-'}</td>
+                        <td className="text-right p-3">{typeof colInfo.min === 'number' ? colInfo.min.toFixed(2) : colInfo.min || '-'}</td>
+                        <td className="text-right p-3">{typeof colInfo.max === 'number' ? colInfo.max.toFixed(2) : colInfo.max || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
