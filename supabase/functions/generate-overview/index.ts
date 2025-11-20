@@ -59,14 +59,31 @@ serve(async (req) => {
 
     const text = await fileData.text();
     const rows = text.split('\n').filter(r => r.trim());
-    const headers = rows[0].split(',').map(h => h.trim());
+    const headers = rows[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
     
-    // Sample the data (take first 100 rows for analysis)
+    // Parse CSV properly handling quoted values
     const sampleRows = rows.slice(1, 101).map(row => {
-      const values = row.split(',');
+      // Simple CSV parser that handles quoted values
+      const values: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim()); // Push the last value
+      
       const obj: any = {};
       headers.forEach((header, i) => {
-        obj[header] = values[i]?.trim() || '';
+        obj[header] = values[i] || '';
       });
       return obj;
     });
