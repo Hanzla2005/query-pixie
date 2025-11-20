@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.get-dataset]
 verify_jwt = true
+
+[functions.generate-overview]
+verify_jwt = true
