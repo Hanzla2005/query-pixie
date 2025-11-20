@@ -81,12 +81,9 @@ const OverviewPage = () => {
           description: insight.description
         };
 
-        // Create distribution data for visualization
-        if (insight.visualizationType === 'bar') {
-          stats.distributions[insight.columnName] = insight.distribution || [];
-        }
-        if (insight.visualizationType === 'line' || insight.visualizationType === 'area') {
-          stats.trends[insight.columnName] = insight.trendData || [];
+        // Use distribution data from the insight
+        if (insight.distribution && insight.distribution.length > 0) {
+          stats.distributions[insight.columnName] = insight.distribution;
         }
       });
 
