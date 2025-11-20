@@ -397,7 +397,7 @@ const OverviewPage = () => {
                   <p className="text-sm"><span className="font-semibold">Trend:</span> {colInfo.trend}</p>
                 </div>
               )}
-              {statistics.distributions[colName] && (
+              {statistics.distributions[colName] && statistics.distributions[colName].length > 0 ? (
                 <ResponsiveContainer width="100%" height={300} className="mt-6">
                   <BarChart data={statistics.distributions[colName]}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -413,6 +413,10 @@ const OverviewPage = () => {
                     <Bar dataKey="count" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+              ) : (
+                <div className="mt-6 p-8 bg-muted/30 rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground">Distribution chart unavailable - data may require cleaning</p>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -466,8 +470,9 @@ const OverviewPage = () => {
         ))}
 
         {/* Categorical Insights */}
-        {categoricalColumns.slice(0, 4).map(([colName, colInfo]: any) => (
-          statistics.distributions[colName] && (
+        {categoricalColumns.slice(0, 4).map(([colName, colInfo]: any) => {
+          const hasDistribution = statistics.distributions[colName] && statistics.distributions[colName].length > 0;
+          return (
             <Card key={`cat-${colName}`} className="report-section border-primary/20 shadow-lg">
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -480,52 +485,58 @@ const OverviewPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={statistics.distributions[colName]}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="hsl(var(--primary))"
-                        dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"}
-                      >
-                        {statistics.distributions[colName].map((_: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }} 
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={statistics.distributions[colName]} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={100} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }} 
-                      />
-                      <Bar dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"} fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {hasDistribution ? (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={statistics.distributions[colName]}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="hsl(var(--primary))"
+                          dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"}
+                        >
+                          {statistics.distributions[colName].map((_: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={statistics.distributions[colName]} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={100} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"} fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="p-8 bg-muted/30 rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground">Distribution chart unavailable</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )
-        ))}
+          );
+        })}
 
         {/* Detailed Statistics Table */}
         {numericColumns.length > 0 && (
