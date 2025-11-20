@@ -9,6 +9,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import MyDatasets from "./pages/MyDatasets";
 import DataPreviewPage from "./pages/DataPreviewPage";
 import AIChatPage from "./pages/AIChatPage";
+import OverviewPage from "./pages/OverviewPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="datasets" element={<MyDatasets />} />
             <Route path="preview" element={<DataPreviewPage />} />
             <Route path="chat" element={<AIChatPage />} />
+            <Route path="overview" element={<OverviewPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

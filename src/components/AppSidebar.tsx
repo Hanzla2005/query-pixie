@@ -1,4 +1,4 @@
-import { Database, BarChart3, MessageSquare } from "lucide-react";
+import { Database, BarChart3, MessageSquare, TrendingUp, Table } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
@@ -17,7 +17,8 @@ import {
 
 const menuItems = [
   { title: "My Datasets", url: "/dashboard/datasets", icon: Database },
-  { title: "Data Preview", url: "/dashboard/preview", icon: BarChart3 },
+  { title: "Overview", url: "/dashboard/overview", icon: TrendingUp },
+  { title: "Data Preview", url: "/dashboard/preview", icon: Table },
   { title: "AI Chat", url: "/dashboard/chat", icon: MessageSquare },
 ];
 

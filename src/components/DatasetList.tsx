@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, MoreVertical, RefreshCw } from "lucide-react";
+import { FileSpreadsheet, MoreVertical, RefreshCw, BarChart3 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -26,6 +27,7 @@ interface Dataset {
 }
 
 const DatasetList = ({ onSelect }: DatasetListProps) => {
+  const navigate = useNavigate();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
@@ -164,6 +166,15 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/dashboard/overview?id=${dataset.id}`);
+                      }}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Overview
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={(e) => handleReprocess(dataset.id, dataset.name, e)}
                       disabled={processingIds.has(dataset.id)}
