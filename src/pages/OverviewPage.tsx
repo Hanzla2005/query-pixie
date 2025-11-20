@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, ArrowLeft, TrendingUp, PieChart as PieChartIcon, BarChart3, Activity } from "lucide-react";
+import { Download, ArrowLeft, TrendingUp, PieChart as PieChartIcon, BarChart3, Activity, Database } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import DatasetSelectorDialog from "@/components/DatasetSelectorDialog";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
 
@@ -21,16 +22,20 @@ const OverviewPage = () => {
   const [data, setData] = useState<any[]>([]);
   const [statistics, setStatistics] = useState<any>({});
   const [isDownloading, setIsDownloading] = useState(false);
+  const [selectorOpen, setSelectorOpen] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!datasetId) {
-      toast.error("No dataset selected");
-      navigate("/dashboard/datasets");
-      return;
+    if (datasetId) {
+      fetchDatasetOverview();
+    } else {
+      setLoading(false);
     }
-    fetchDatasetOverview();
   }, [datasetId]);
+
+  const handleSelectDataset = (selectedDatasetId: string) => {
+    navigate(`/dashboard/overview?id=${selectedDatasetId}`);
+  };
 
   const fetchDatasetOverview = async () => {
     try {
@@ -222,6 +227,48 @@ const OverviewPage = () => {
       setIsDownloading(false);
     }
   };
+
+  if (!datasetId) {
+    return (
+      <div className="p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Dataset Overview
+          </h1>
+          <p className="text-muted-foreground mt-1">Comprehensive analysis and visualizations</p>
+        </div>
+
+        <Card className="shadow-lg border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              Overview Dashboard
+            </CardTitle>
+            <CardDescription>
+              Select a dataset to view comprehensive trends and visualizations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12 text-muted-foreground">
+              <Database className="h-16 w-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg mb-2">No dataset selected</p>
+              <p className="text-sm mb-4">Select a dataset to view detailed trends, distributions, and download comprehensive reports</p>
+              <Button onClick={() => setSelectorOpen(true)} className="bg-gradient-to-r from-primary to-primary/80">
+                <Database className="h-4 w-4 mr-2" />
+                Select Dataset
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <DatasetSelectorDialog
+          open={selectorOpen}
+          onOpenChange={setSelectorOpen}
+          onSelectDataset={handleSelectDataset}
+        />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
