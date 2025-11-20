@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,32 +9,30 @@ import { toast } from "sonner";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import DatasetSelectorDialog from "@/components/DatasetSelectorDialog";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
 
 const OverviewPage = () => {
+  const [searchParams] = useSearchParams();
+  const datasetId = searchParams.get('id');
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [dataset, setDataset] = useState<any>(null);
   const [data, setData] = useState<any[]>([]);
   const [statistics, setStatistics] = useState<any>({});
   const [isDownloading, setIsDownloading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(true);
   const reportRef = useRef<HTMLDivElement>(null);
 
-  const handleDatasetSelect = (datasetId: string) => {
-    setDialogOpen(false);
-    fetchDatasetOverview(datasetId);
-  };
-
   useEffect(() => {
-    if (!dataset) {
-      setDialogOpen(true);
+    if (!datasetId) {
+      toast.error("No dataset selected");
+      navigate("/dashboard/datasets");
+      return;
     }
-  }, [dataset]);
+    fetchDatasetOverview();
+  }, [datasetId]);
 
-  const fetchDatasetOverview = async (datasetId: string) => {
+  const fetchDatasetOverview = async () => {
     try {
       setLoading(true);
 
@@ -64,7 +62,6 @@ const OverviewPage = () => {
     } catch (error) {
       console.error("Error fetching dataset overview:", error);
       toast.error("Failed to load dataset overview");
-      setDataset(null);
     } finally {
       setLoading(false);
     }
@@ -261,43 +258,33 @@ const OverviewPage = () => {
     .filter(([_, info]: any) => info.type === 'categorical');
 
   return (
-    <>
-      <DatasetSelectorDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSelectDataset={handleDatasetSelect}
-      />
-      
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setDataset(null);
-                setDialogOpen(true);
-              }}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Dataset Overview
-              </h1>
-              <p className="text-muted-foreground mt-1">{dataset.name}</p>
-            </div>
-          </div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
           <Button
-            onClick={downloadReport}
-            disabled={isDownloading}
-            className="bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-glow"
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard/datasets")}
           >
-            <Download className="h-4 w-4 mr-2" />
-            Download Report
+            <ArrowLeft className="h-5 w-5" />
           </Button>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Dataset Overview
+            </h1>
+            <p className="text-muted-foreground mt-1">{dataset.name}</p>
+          </div>
         </div>
+        <Button
+          onClick={downloadReport}
+          disabled={isDownloading}
+          className="bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-glow"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Download Report
+        </Button>
+      </div>
 
       {/* Report Content */}
       <div ref={reportRef} className="space-y-6">
@@ -518,8 +505,7 @@ const OverviewPage = () => {
           </CardContent>
         </Card>
       </div>
-      </div>
-    </>
+    </div>
   );
 };
 
