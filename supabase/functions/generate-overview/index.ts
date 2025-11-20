@@ -73,12 +73,37 @@ serve(async (req) => {
 
     console.log(`Analyzing ${sampleRows.length} sample rows from dataset`);
 
+    // Calculate actual distribution data for numeric columns
+    const distributions: any = {};
+    dataset.columns.forEach((col: any) => {
+      if (col.type === 'number') {
+        const values = sampleRows
+          .map(row => parseFloat(row[col.name]))
+          .filter(v => !isNaN(v));
+        
+        if (values.length > 0) {
+          // Create histogram bins
+          const bins = 8;
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const binSize = (max - min) / bins;
+          const distribution = Array(bins).fill(0);
+          
+          values.forEach(v => {
+            const binIndex = Math.min(Math.floor((v - min) / binSize), bins - 1);
+            distribution[binIndex]++;
+          });
+
+          distributions[col.name] = distribution.map((count, i) => ({
+            range: `${(min + i * binSize).toFixed(1)}-${(min + (i + 1) * binSize).toFixed(1)}`,
+            count
+          }));
+        }
+      }
+    });
+
     // Prepare prompt for AI
-    const systemPrompt = `You are a data analysis expert. Analyze the provided dataset and generate comprehensive insights including:
-1. Key trends and patterns in the data
-2. Statistical insights for numeric columns
-3. Distribution analysis for categorical columns
-4. Recommendations for visualizations
+    const systemPrompt = `You are a data analysis expert. Analyze the provided dataset and generate comprehensive insights.
 
 Return your response as a structured JSON object with this exact format:
 {
@@ -90,9 +115,8 @@ Return your response as a structured JSON object with this exact format:
       "median": number,
       "min": number,
       "max": number,
-      "trend": "description of trend",
-      "visualizationType": "bar|line|area",
-      "description": "detailed description of what this chart shows"
+      "trend": "description of trend or pattern observed",
+      "description": "detailed description of what this data shows and its significance"
     }
   ],
   "categoricalInsights": [
@@ -100,12 +124,13 @@ Return your response as a structured JSON object with this exact format:
       "columnName": "name of categorical column",
       "topValues": [{"name": "value", "count": number}],
       "uniqueCount": number,
-      "visualizationType": "pie|bar",
-      "description": "detailed description of what this chart shows"
+      "description": "detailed description of the distribution and what it reveals"
     }
   ],
   "keyFindings": ["finding 1", "finding 2", "finding 3"]
-}`;
+}
+
+Important: Do not include visualizationType fields. Focus on statistical analysis and insights.`;
 
     const userPrompt = `Analyze this dataset:
 Dataset Name: ${dataset.name}
@@ -168,6 +193,13 @@ Provide comprehensive analysis with insights and visualization recommendations.`
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : content;
       insights = JSON.parse(jsonStr);
+      
+      // Add distribution data to numeric insights
+      insights.numericInsights = insights.numericInsights?.map((insight: any) => ({
+        ...insight,
+        distribution: distributions[insight.columnName] || []
+      })) || [];
+      
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       throw new Error("Failed to parse AI insights");
