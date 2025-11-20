@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { datasetId } = await req.json();
-    console.log("Generating overview for dataset:", datasetId);
+    const { datasetId, filters } = await req.json();
+    console.log("Generating overview for dataset:", datasetId, "with filters:", filters);
     
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -88,13 +88,42 @@ serve(async (req) => {
       return obj;
     });
 
-    console.log(`Analyzing ${sampleRows.length} sample rows from dataset`);
+    // Apply filters if provided
+    let filteredRows = sampleRows;
+    if (filters) {
+      filteredRows = sampleRows.filter(row => {
+        // Apply numeric filters
+        if (filters.numericFilters) {
+          for (const [col, range] of Object.entries(filters.numericFilters)) {
+            const value = parseFloat(row[col]);
+            if (!isNaN(value)) {
+              const { min, max } = range as { min: number; max: number };
+              if (value < min || value > max) return false;
+            }
+          }
+        }
+        
+        // Apply categorical filters
+        if (filters.categoricalFilters) {
+          for (const [col, values] of Object.entries(filters.categoricalFilters)) {
+            const rowValue = row[col];
+            if (Array.isArray(values) && values.length > 0) {
+              if (!values.includes(rowValue)) return false;
+            }
+          }
+        }
+        
+        return true;
+      });
+    }
+
+    console.log(`Analyzing ${filteredRows.length} rows from dataset (${sampleRows.length} total sampled)`);
 
     // Calculate actual distribution data for numeric columns
     const distributions: any = {};
     dataset.columns.forEach((col: any) => {
       if (col.type === 'number') {
-        const values = sampleRows
+        const values = filteredRows
           .map(row => parseFloat(row[col.name]))
           .filter(v => !isNaN(v));
         
@@ -152,12 +181,13 @@ Important: Do not include visualizationType fields. Focus on statistical analysi
     const userPrompt = `Analyze this dataset:
 Dataset Name: ${dataset.name}
 Total Rows: ${dataset.row_count}
+${filteredRows.length < sampleRows.length ? `Filtered Rows: ${filteredRows.length} (filters applied)` : ''}
 Columns: ${JSON.stringify(dataset.columns)}
 
-Sample Data (first 100 rows):
-${JSON.stringify(sampleRows, null, 2)}
+Sample Data (first 100 rows${filteredRows.length < sampleRows.length ? ' after filtering' : ''}):
+${JSON.stringify(filteredRows, null, 2)}
 
-Provide comprehensive analysis with insights and visualization recommendations.`;
+Provide comprehensive analysis with insights and visualization recommendations.${filteredRows.length < sampleRows.length ? ' Note that filters have been applied to focus on specific data ranges/categories.' : ''}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -229,10 +259,11 @@ Provide comprehensive analysis with insights and visualization recommendations.`
           id: dataset.id,
           name: dataset.name,
           row_count: dataset.row_count,
+          filtered_row_count: filteredRows.length,
           columns: dataset.columns
         },
         insights,
-        sampleData: sampleRows.slice(0, 10) // Include first 10 rows for reference
+        sampleData: filteredRows.slice(0, 10) // Include first 10 rows for reference
       }),
       { 
         headers: { 
