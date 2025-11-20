@@ -99,41 +99,48 @@ serve(async (req) => {
 
     console.log(`Analyzing ${sampleRows.length} sample rows from dataset`);
 
-    // Calculate actual distribution data for numeric columns
+    // Calculate distribution data for numeric-looking columns using CSV headers
     const distributions: any = {};
-    dataset.columns.forEach((col: any) => {
-      if (col.type === 'number') {
-        const values = sampleRows
-          .map(row => {
-            const val = row[col.name];
-            return parseFloat(val);
-          })
-          .filter(v => !isNaN(v));
-        
-        console.log(`Column ${col.name}: Found ${values.length} numeric values`);
-        
-        if (values.length > 0) {
-          // Create histogram bins
-          const bins = 10;
-          const min = Math.min(...values);
-          const max = Math.max(...values);
-          const binSize = (max - min) / bins;
-          const distribution = Array(bins).fill(0);
-          
-          values.forEach(v => {
-            const binIndex = Math.min(Math.floor((v - min) / binSize), bins - 1);
-            distribution[binIndex]++;
-          });
+    const MAX_BINS = 10;
 
-          distributions[col.name] = distribution.map((count, i) => ({
-            range: `${(min + i * binSize).toFixed(1)}-${(min + (i + 1) * binSize).toFixed(1)}`,
-            count
-          }));
-          
-          console.log(`Distribution for ${col.name}:`, distributions[col.name]);
-        } else {
-          console.log(`No valid numeric values found for ${col.name}`);
+    headers.forEach((header) => {
+      // Collect numeric candidates for this column from sample rows
+      const rawValues = sampleRows
+        .map((row) => row[header])
+        .filter((v: any) => v !== undefined && v !== null && String(v).trim() !== "");
+
+      const numericValues = rawValues
+        .map((v: any) => parseFloat(String(v).replace(/[^0-9.+-eE]/g, "")))
+        .filter((v: number) => !isNaN(v));
+
+      const numericRatio = rawValues.length > 0 ? numericValues.length / rawValues.length : 0;
+      console.log(`Column ${header}: ${numericValues.length} numeric of ${rawValues.length} values (ratio=${numericRatio})`);
+
+      // Treat column as numeric if majority of non-empty values parse as numbers
+      if (numericValues.length > 0 && numericRatio >= 0.6) {
+        const min = Math.min(...numericValues);
+        const max = Math.max(...numericValues);
+        if (min === max) {
+          distributions[header] = [{ range: `${min.toFixed(2)}`, count: numericValues.length }];
+          console.log(`Uniform distribution for ${header}:`, distributions[header]);
+          return;
         }
+
+        const bins = Math.min(MAX_BINS, numericValues.length);
+        const binSize = (max - min) / bins;
+        const distribution = Array(bins).fill(0);
+
+        numericValues.forEach((v) => {
+          const binIndex = Math.min(Math.floor((v - min) / binSize), bins - 1);
+          distribution[binIndex]++;
+        });
+
+        distributions[header] = distribution.map((count, i) => ({
+          range: `${(min + i * binSize).toFixed(2)}-${(min + (i + 1) * binSize).toFixed(2)}`,
+          count,
+        }));
+
+        console.log(`Distribution for ${header}:`, distributions[header]);
       }
     });
 
