@@ -6,6 +6,7 @@ import { Send, Bot, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ChartDisplay from "./ChartDisplay";
+import Chart3D from "./Chart3D";
 
 interface Message {
   id: string;
@@ -18,6 +19,15 @@ interface Message {
     data: Array<{ name: string; value: number }>;
     xAxisLabel?: string;
     yAxisLabel?: string;
+  };
+  chart3DData?: {
+    xColumn: string;
+    yColumn: string;
+    zColumn: string;
+    title: string;
+    data: any[];
+    type?: '3d-scatter' | '3d-surface';
+    colorColumn?: string;
   };
 }
 
@@ -89,6 +99,7 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
       const decoder = new TextDecoder();
       let assistantContent = "";
       let assistantMessageId = (Date.now() + 1).toString();
+      let toolCallBuffer: any = null; // Buffer for accumulating tool call data
 
       // Add initial assistant message
       setMessages(prev => [
@@ -141,25 +152,59 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
               );
             }
             
-            // Handle tool calls (chart data)
-            if (toolCalls && toolCalls[0]?.function?.arguments) {
-              try {
-                const args = JSON.parse(toolCalls[0].function.arguments);
-                if (args.chartType && args.data) {
-                  setMessages(prev =>
-                    prev.map(m =>
-                      m.id === assistantMessageId
-                        ? { 
-                            ...m, 
-                            content: assistantContent,
-                            chartData: args 
-                          }
-                        : m
-                    )
-                  );
+            // Handle tool calls (accumulate arguments across chunks)
+            if (toolCalls && toolCalls[0]) {
+              const toolCall = toolCalls[0];
+              
+              // Initialize buffer if this is the first chunk
+              if (toolCall.function?.name && !toolCallBuffer) {
+                toolCallBuffer = {
+                  name: toolCall.function.name,
+                  arguments: ""
+                };
+              }
+              
+              // Accumulate arguments
+              if (toolCall.function?.arguments) {
+                toolCallBuffer.arguments += toolCall.function.arguments;
+              }
+              
+              // Try to parse when we have complete JSON
+              if (toolCallBuffer && toolCallBuffer.arguments) {
+                try {
+                  const args = JSON.parse(toolCallBuffer.arguments);
+                  const functionName = toolCallBuffer.name;
+                  
+                  if (functionName === "create_chart" && args.chartType && args.data) {
+                    setMessages(prev =>
+                      prev.map(m =>
+                        m.id === assistantMessageId
+                          ? { 
+                              ...m, 
+                              content: assistantContent,
+                              chartData: args 
+                            }
+                          : m
+                      )
+                    );
+                    toolCallBuffer = null; // Reset after successful parse
+                  } else if (functionName === "create_3d_chart" && args.xColumn && args.yColumn && args.zColumn) {
+                    setMessages(prev =>
+                      prev.map(m =>
+                        m.id === assistantMessageId
+                          ? { 
+                              ...m, 
+                              content: assistantContent,
+                              chart3DData: args 
+                            }
+                          : m
+                      )
+                    );
+                    toolCallBuffer = null; // Reset after successful parse
+                  }
+                } catch (e) {
+                  // JSON not complete yet, keep accumulating
                 }
-              } catch (e) {
-                console.error("Error parsing tool call:", e);
               }
             }
           } catch {
@@ -221,7 +266,20 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
                     />
                   </div>
                 )}
-                {!message.chartData && (
+                {message.chart3DData && (
+                  <div className="mt-4">
+                    <Chart3D
+                      data={message.chart3DData.data}
+                      xColumn={message.chart3DData.xColumn}
+                      yColumn={message.chart3DData.yColumn}
+                      zColumn={message.chart3DData.zColumn}
+                      title={message.chart3DData.title}
+                      type={message.chart3DData.type}
+                      colorColumn={message.chart3DData.colorColumn}
+                    />
+                  </div>
+                )}
+                {!message.chartData && !message.chart3DData && (
                   <p className="text-xs opacity-70 mt-1">
                     {message.timestamp.toLocaleTimeString()}
                   </p>
