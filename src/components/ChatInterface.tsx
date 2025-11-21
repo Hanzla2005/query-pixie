@@ -2,12 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, Filter } from "lucide-react";
+import { Send, Bot, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ChartDisplay from "./ChartDisplay";
-import { DataFilterPanel } from "./DataFilterPanel";
-import { Badge } from "@/components/ui/badge";
 
 interface Message {
   id: string;
@@ -32,11 +30,6 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [datasetData, setDatasetData] = useState<any[]>([]);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [activeFilters, setActiveFilters] = useState<any[]>([]);
-  const [columns, setColumns] = useState<any[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,90 +37,6 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
-
-  // Fetch dataset data for filtering
-  useEffect(() => {
-    if (datasetId) {
-      fetchDatasetData();
-    }
-  }, [datasetId]);
-
-  const fetchDatasetData = async () => {
-    try {
-      const { data: dataset } = await supabase
-        .from("datasets")
-        .select("*")
-        .eq("id", datasetId)
-        .maybeSingle();
-
-      if (!dataset) return;
-
-      const { data: fileData } = await supabase.storage
-        .from("datasets")
-        .download(dataset.file_path);
-
-      if (fileData) {
-        const text = await fileData.text();
-        const rows = text.split('\n').filter(r => r.trim()).slice(0, 1001); // Header + 1000 rows
-
-        const parseCSVRow = (row: string): string[] => {
-          const values: string[] = [];
-          let current = '';
-          let inQuotes = false;
-
-          for (let i = 0; i < row.length; i++) {
-            const char = row[i];
-            if (char === '"') {
-              inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-              values.push(current.trim());
-              current = '';
-            } else {
-              current += char;
-            }
-          }
-          values.push(current.trim());
-          return values;
-        };
-
-        const headers = parseCSVRow(rows[0]);
-        const parsedData = rows.slice(1).map((row: string) => {
-          const values = parseCSVRow(row);
-          const obj: any = {};
-          headers.forEach((header: string, i: number) => {
-            obj[header] = values[i] || '';
-          });
-          return obj;
-        });
-
-        setDatasetData(parsedData);
-        setFilteredData(parsedData);
-
-        // Determine column types
-        const columnMetadata = headers.map((colName) => {
-          const sampleValues = parsedData.slice(0, 100).map((row) => row[colName]);
-          const numericValues = sampleValues.filter((v) => !isNaN(parseFloat(v)));
-          const isNumeric = numericValues.length / sampleValues.length > 0.8;
-          const uniqueCount = new Set(sampleValues).size;
-          const isCategorical = uniqueCount < 20 && !isNumeric;
-
-          return {
-            name: colName,
-            type: isNumeric ? "numeric" as const : isCategorical ? "categorical" as const : "text" as const,
-          };
-        });
-
-        setColumns(columnMetadata);
-      }
-    } catch (error) {
-      console.error("Error fetching dataset data:", error);
-    }
-  };
-
-  const handleFilterChange = (newFilteredData: any[], filters: any[]) => {
-    setFilteredData(newFilteredData);
-    setActiveFilters(filters);
-  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,10 +75,6 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
               content: m.content,
             })),
             datasetId,
-            filteredData: activeFilters.length > 0 ? filteredData : undefined,
-            filterSummary: activeFilters.length > 0 
-              ? `Currently showing ${filteredData.length} of ${datasetData.length} rows with ${activeFilters.length} filter(s) applied.`
-              : undefined,
           }),
         }
       );
@@ -296,45 +201,7 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-20rem)] overflow-hidden" role="region" aria-label="Chat conversation">
-      {/* Filter Toggle & Summary */}
-      {datasetId && datasetData.length > 0 && (
-        <div className="mb-4 space-y-2 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              aria-expanded={showFilters}
-              aria-label={showFilters ? "Hide filters" : "Show filters"}
-            >
-              <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
-              {showFilters ? "Hide Filters" : "Show Filters"}
-              {activeFilters.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {activeFilters.length}
-                </Badge>
-              )}
-            </Button>
-            {activeFilters.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Analyzing {filteredData.length} of {datasetData.length} rows
-              </p>
-            )}
-          </div>
-
-          {showFilters && (
-            <div className="max-h-96 overflow-auto">
-              <DataFilterPanel
-                data={datasetData}
-                columns={columns}
-                onFilterChange={handleFilterChange}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
+    <div className="flex flex-col h-full overflow-hidden" role="region" aria-label="Chat conversation">
       <ScrollArea className="flex-1 pr-4 overflow-y-auto" ref={scrollRef} role="log" aria-live="polite" aria-relevant="additions">
         <div className="space-y-4">
           {messages.length === 0 && (
