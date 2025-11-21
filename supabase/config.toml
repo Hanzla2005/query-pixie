@@ -14,3 +14,10 @@ verify_jwt = true
 
 [functions.generate-overview]
 verify_jwt = true
+
+[functions.preprocess-dataset]
+verify_jwt = true
+
+[functions.preview-preprocessing]
+verify_jwt = true
+

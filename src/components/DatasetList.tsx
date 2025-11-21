@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -21,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import PreprocessingPreview from "@/components/PreprocessingPreview";
 
 interface DatasetListProps {
   onSelect: (datasetId: string) => void;
@@ -229,43 +231,53 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
                     </p>
                   </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/dashboard/overview?id=${dataset.id}`);
-                      }}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      View Overview
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => handleReprocess(dataset.id, dataset.name, e)}
-                      disabled={processingIds.has(dataset.id)}
-                    >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${processingIds.has(dataset.id) ? 'animate-spin' : ''}`} />
-                      {processingIds.has(dataset.id) ? 'Processing...' : 'Reprocess Data'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => handleDeleteClick(dataset, e)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Dataset
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex gap-2">
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <PreprocessingPreview
+                      datasetId={dataset.id}
+                      datasetName={dataset.name}
+                      onConfirm={() => handleReprocess(dataset.id, dataset.name, {} as React.MouseEvent)}
+                    />
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/dashboard/overview?id=${dataset.id}`);
+                        }}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        View Overview
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => handleReprocess(dataset.id, dataset.name, e)}
+                        disabled={processingIds.has(dataset.id)}
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${processingIds.has(dataset.id) ? 'animate-spin' : ''}`} />
+                        {processingIds.has(dataset.id) ? 'Processing...' : 'Reprocess Data'}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => handleDeleteClick(dataset, e)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Dataset
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </button>
           ))}
