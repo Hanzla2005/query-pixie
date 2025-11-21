@@ -4,13 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, ArrowLeft, TrendingUp, PieChart as PieChartIcon, BarChart3, Activity, Database, Box } from "lucide-react";
+import { Download, ArrowLeft, TrendingUp, PieChart as PieChartIcon, BarChart3, Activity, Database } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import DatasetSelectorDialog from "@/components/DatasetSelectorDialog";
-import Chart3D from "@/components/Chart3D";
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -558,48 +557,6 @@ const OverviewPage = () => {
             </Card>
           );
         })}
-
-        {/* 3D Visualizations */}
-        {numericColumns.length >= 3 && data.length > 0 && (
-          <>
-            <Card className="report-section border-primary/20 shadow-lg">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Box className="h-5 w-5 text-primary" />
-                  <CardTitle>3D Relationship Analysis</CardTitle>
-                </div>
-                <CardDescription>
-                  Interactive 3D scatter plots showing multi-dimensional relationships between numeric variables.
-                  Rotate, zoom, and pan to explore data from different angles.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {/* First 3D chart with first three numeric columns */}
-            <Chart3D
-              data={data}
-              xColumn={numericColumns[0][0]}
-              yColumn={numericColumns[1][0]}
-              zColumn={numericColumns[2][0]}
-              title={`3D Analysis: ${numericColumns[0][0]} vs ${numericColumns[1][0]} vs ${numericColumns[2][0]}`}
-              type="3d-scatter"
-              colorColumn={categoricalColumns.length > 0 ? categoricalColumns[0][0] : undefined}
-            />
-
-            {/* If we have 4+ numeric columns, add another 3D chart */}
-            {numericColumns.length >= 4 && (
-              <Chart3D
-                data={data}
-                xColumn={numericColumns[0][0]}
-                yColumn={numericColumns[2][0]}
-                zColumn={numericColumns[3][0]}
-                title={`3D Analysis: ${numericColumns[0][0]} vs ${numericColumns[2][0]} vs ${numericColumns[3][0]}`}
-                type="3d-scatter"
-                colorColumn={categoricalColumns.length > 0 ? categoricalColumns[0][0] : undefined}
-              />
-            )}
-          </>
-        )}
 
         {/* Detailed Statistics Table */}
         {numericColumns.length > 0 && (

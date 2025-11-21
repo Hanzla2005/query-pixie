@@ -35,7 +35,7 @@ serve(async (req) => {
     }
 
     // Get dataset context if datasetId is provided
-    let systemPrompt = "You are DataMind, an AI assistant specialized in data analysis and insights. You help users understand their datasets, create visualizations, and discover patterns in their data. Keep your responses clear, concise, and actionable.\n\nWhen users ask for trends, relationships, or multi-dimensional analysis, use 3D visualizations to show how variables interact. 3D charts are perfect for exploring correlations between three numeric variables.";
+    let systemPrompt = "You are DataMind, an AI assistant specialized in data analysis and insights. You help users understand their datasets, create visualizations, and discover patterns in their data. Keep your responses clear, concise, and actionable.\n\nYou have access to multiple chart types:\n- Bar charts: Compare values across categories\n- Line charts: Show trends over time\n- Pie/Donut charts: Show proportions\n- Area charts: Show cumulative trends\n- Scatter plots: Show correlations between two variables\n- Bubble charts: Show relationships between three variables (x, y, and size)\n- Stacked bar: Compare parts of a whole across categories\n- Grouped bar: Compare multiple series side by side\n- Horizontal bar: Good for long category names\n\nChoose the most appropriate chart type based on the data and user's question.";
     let datasetContext: any = null;
     let sampleData: any[] = [];
     
@@ -128,85 +128,41 @@ serve(async (req) => {
             type: "function",
             function: {
               name: "create_chart",
-              description: "Create a 2D chart or graph visualization from data. Use this for bar charts, line charts, pie charts, and area charts.",
+              description: "Create visualizations from data. Choose appropriate chart type: bar (compare categories), line (trends), pie/donut (proportions), area (cumulative trends), scatter (correlations), bubble (3-variable relationships with x, y, size), stacked-bar (parts of whole), grouped-bar (compare series), horizontal-bar (long labels).",
               parameters: {
                 type: "object",
                 properties: {
                   chartType: {
                     type: "string",
-                    enum: ["bar", "line", "pie", "area"],
-                    description: "The type of chart to create"
+                    enum: ["bar", "line", "pie", "area", "scatter", "bubble", "donut", "stacked-bar", "horizontal-bar", "grouped-bar"],
+                    description: "Chart type based on data and question"
                   },
                   title: {
                     type: "string",
-                    description: "Title of the chart"
-                  },
-                  data: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        name: { type: "string" },
-                        value: { type: "number" }
-                      }
-                    },
-                    description: "Array of data points with name and value"
-                  },
-                  xAxisLabel: {
-                    type: "string",
-                    description: "Label for X axis (optional)"
-                  },
-                  yAxisLabel: {
-                    type: "string",
-                    description: "Label for Y axis (optional)"
-                  }
-                },
-                required: ["chartType", "title", "data"]
-              }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "create_3d_chart",
-              description: "Create an interactive 3D visualization to show relationships between three numeric variables. Perfect for exploring correlations, trends, and multi-dimensional patterns. Use when users ask for 3D graphs, multi-variable analysis, or spatial relationships.",
-              parameters: {
-                type: "object",
-                properties: {
-                  xColumn: {
-                    type: "string",
-                    description: "Name of the column for X axis (must be numeric)"
-                  },
-                  yColumn: {
-                    type: "string",
-                    description: "Name of the column for Y axis (must be numeric)"
-                  },
-                  zColumn: {
-                    type: "string",
-                    description: "Name of the column for Z axis (must be numeric)"
-                  },
-                  title: {
-                    type: "string",
-                    description: "Title of the 3D chart"
+                    description: "Descriptive chart title"
                   },
                   data: {
                     type: "array",
                     items: {
                       type: "object"
                     },
-                    description: "Array of data objects containing all column values"
+                    description: "Data array. Simple charts: [{name: string, value: number}]. Scatter: [{x: number, y: number, name?: string}]. Bubble: [{x: number, y: number, z: number, name?: string}]. Multi-series: [{name: string, series1: number, series2: number, ...}]"
                   },
-                  type: {
+                  xAxisLabel: {
                     type: "string",
-                    enum: ["3d-scatter", "3d-surface"],
-                    description: "Type of 3D visualization (default: 3d-scatter)"
+                    description: "X axis label (optional)"
                   },
-                  colorColumn: {
+                  yAxisLabel: {
                     type: "string",
-                    description: "Optional column name to use for color coding points"
+                    description: "Y axis label (optional)"
+                  },
+                  series: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Series names for multi-series charts like stacked-bar or grouped-bar (optional)"
                   }
                 },
-                required: ["xColumn", "yColumn", "zColumn", "title", "data"]
+                required: ["chartType", "title", "data"]
               }
             }
           }

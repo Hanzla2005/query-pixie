@@ -6,7 +6,6 @@ import { Send, Bot, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ChartDisplay from "./ChartDisplay";
-import Chart3D from "./Chart3D";
 
 interface Message {
   id: string;
@@ -14,20 +13,12 @@ interface Message {
   content: string;
   timestamp: Date;
   chartData?: {
-    chartType: "bar" | "line" | "pie" | "area";
+    chartType: "bar" | "line" | "pie" | "area" | "scatter" | "bubble" | "donut" | "stacked-bar" | "horizontal-bar" | "grouped-bar";
     title: string;
-    data: Array<{ name: string; value: number }>;
+    data: Array<any>;
     xAxisLabel?: string;
     yAxisLabel?: string;
-  };
-  chart3DData?: {
-    xColumn: string;
-    yColumn: string;
-    zColumn: string;
-    title: string;
-    data: any[];
-    type?: '3d-scatter' | '3d-surface';
-    colorColumn?: string;
+    series?: string[];
   };
 }
 
@@ -188,19 +179,6 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
                       )
                     );
                     toolCallBuffer = null; // Reset after successful parse
-                  } else if (functionName === "create_3d_chart" && args.xColumn && args.yColumn && args.zColumn) {
-                    setMessages(prev =>
-                      prev.map(m =>
-                        m.id === assistantMessageId
-                          ? { 
-                              ...m, 
-                              content: assistantContent,
-                              chart3DData: args 
-                            }
-                          : m
-                      )
-                    );
-                    toolCallBuffer = null; // Reset after successful parse
                   }
                 } catch (e) {
                   // JSON not complete yet, keep accumulating
@@ -263,23 +241,11 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
                       data={message.chartData.data}
                       xAxisLabel={message.chartData.xAxisLabel}
                       yAxisLabel={message.chartData.yAxisLabel}
+                      series={message.chartData.series}
                     />
                   </div>
                 )}
-                {message.chart3DData && (
-                  <div className="mt-4">
-                    <Chart3D
-                      data={message.chart3DData.data}
-                      xColumn={message.chart3DData.xColumn}
-                      yColumn={message.chart3DData.yColumn}
-                      zColumn={message.chart3DData.zColumn}
-                      title={message.chart3DData.title}
-                      type={message.chart3DData.type}
-                      colorColumn={message.chart3DData.colorColumn}
-                    />
-                  </div>
-                )}
-                {!message.chartData && !message.chart3DData && (
+                {!message.chartData && (
                   <p className="text-xs opacity-70 mt-1">
                     {message.timestamp.toLocaleTimeString()}
                   </p>
