@@ -6,6 +6,57 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper: Detect if column is numeric
+function isNumericColumn(values: string[]): boolean {
+  const nonEmptyValues = values.filter(v => v && v.trim() !== '');
+  if (nonEmptyValues.length === 0) return false;
+  
+  const numericCount = nonEmptyValues.filter(v => !isNaN(Number(v))).length;
+  return numericCount / nonEmptyValues.length > 0.8; // 80% threshold
+}
+
+// Helper: Calculate mean
+function calculateMean(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, val) => sum + val, 0) / values.length;
+}
+
+// Helper: Calculate median
+function calculateMedian(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+// Helper: Calculate mode for categorical data
+function calculateMode(values: string[]): string {
+  if (values.length === 0) return 'Unknown';
+  const frequency: Record<string, number> = {};
+  values.forEach(val => {
+    frequency[val] = (frequency[val] || 0) + 1;
+  });
+  return Object.entries(frequency).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+}
+
+// Helper: Detect and handle outliers using IQR method
+function detectOutliers(values: number[]): { isOutlier: boolean[], q1: number, q3: number, iqr: number } {
+  if (values.length < 4) return { isOutlier: values.map(() => false), q1: 0, q3: 0, iqr: 0 };
+  
+  const sorted = [...values].sort((a, b) => a - b);
+  const q1Index = Math.floor(sorted.length * 0.25);
+  const q3Index = Math.floor(sorted.length * 0.75);
+  const q1 = sorted[q1Index];
+  const q3 = sorted[q3Index];
+  const iqr = q3 - q1;
+  
+  const lowerBound = q1 - 1.5 * iqr;
+  const upperBound = q3 + 1.5 * iqr;
+  
+  const isOutlier = values.map(v => v < lowerBound || v > upperBound);
+  return { isOutlier, q1, q3, iqr };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -41,7 +92,7 @@ serve(async (req) => {
       throw new Error("Dataset ID is required");
     }
 
-    console.log("Starting preprocessing for dataset:", datasetId);
+    console.log("Starting intelligent preprocessing for dataset:", datasetId);
 
     // Get dataset
     const { data: dataset, error: datasetError } = await supabaseClient
@@ -79,53 +130,147 @@ serve(async (req) => {
     const headers = lines[0].split(",").map(col => col.trim().replace(/^"|"$/g, ""));
     const originalRowCount = lines.length - 1;
 
-    // Preprocessing steps
+    console.log(`Processing ${originalRowCount} rows with ${headers.length} columns`);
+
+    // Step 1: Parse all rows
+    const rawRows: string[][] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cells = lines[i].split(",").map(cell => cell.trim().replace(/^"|"$/g, ""));
+      rawRows.push(cells);
+    }
+
+    // Step 2: Detect column types and prepare imputation values
+    const columnStats: Record<number, any> = {};
+    
+    for (let colIdx = 0; colIdx < headers.length; colIdx++) {
+      const columnValues = rawRows.map(row => row[colIdx] || '');
+      const nonMissingValues = columnValues.filter(v => {
+        const normalized = v.toLowerCase();
+        return v && normalized !== 'null' && normalized !== 'na' && normalized !== 'n/a' && normalized !== 'nan' && normalized !== '';
+      });
+
+      const isNumeric = isNumericColumn(nonMissingValues);
+      
+      if (isNumeric) {
+        const numericValues = nonMissingValues.map(v => Number(v)).filter(v => !isNaN(v));
+        const mean = calculateMean(numericValues);
+        const median = calculateMedian(numericValues);
+        const { isOutlier, q1, q3, iqr } = detectOutliers(numericValues);
+        const outlierCount = isOutlier.filter(x => x).length;
+        
+        columnStats[colIdx] = {
+          type: 'numeric',
+          mean,
+          median,
+          imputeValue: median, // Use median for robustness against outliers
+          missingCount: columnValues.length - nonMissingValues.length,
+          outlierCount,
+          q1,
+          q3,
+          iqr,
+          min: Math.min(...numericValues),
+          max: Math.max(...numericValues),
+        };
+        
+        console.log(`Column "${headers[colIdx]}": Numeric - Mean: ${mean.toFixed(2)}, Median: ${median.toFixed(2)}, Missing: ${columnStats[colIdx].missingCount}, Outliers: ${outlierCount}`);
+      } else {
+        const mode = calculateMode(nonMissingValues);
+        columnStats[colIdx] = {
+          type: 'categorical',
+          mode,
+          imputeValue: mode,
+          missingCount: columnValues.length - nonMissingValues.length,
+          uniqueValues: new Set(nonMissingValues).size,
+        };
+        
+        console.log(`Column "${headers[colIdx]}": Categorical - Mode: ${mode}, Missing: ${columnStats[colIdx].missingCount}, Unique: ${columnStats[colIdx].uniqueValues}`);
+      }
+    }
+
+    // Step 3: Apply preprocessing with intelligent imputation
     const preprocessingMetadata: Record<string, any> = {
       steps: [],
       removedRows: 0,
-      cleanedCells: 0,
+      imputedCells: 0,
       duplicatesRemoved: 0,
+      outliersDetected: 0,
+      columnStats: {},
     };
 
     const processedRows: string[][] = [];
     const seenRows = new Set<string>();
 
-    // Process each row
-    for (let i = 1; i < lines.length; i++) {
-      const cells = lines[i].split(",").map(cell => cell.trim().replace(/^"|"$/g, ""));
+    for (let i = 0; i < rawRows.length; i++) {
+      const row = rawRows[i];
       
-      // Skip rows with all empty cells
-      if (cells.every(cell => !cell)) {
+      // Skip rows with ALL cells empty
+      if (row.every(cell => !cell || cell.trim() === '')) {
         preprocessingMetadata.removedRows++;
         continue;
       }
 
-      // Clean cells: remove extra whitespace, handle missing values
-      const cleanedCells = cells.map((cell, idx) => {
-        if (!cell || cell.toLowerCase() === 'null' || cell.toLowerCase() === 'na' || cell.toLowerCase() === 'n/a') {
-          preprocessingMetadata.cleanedCells++;
-          return ''; // Replace missing values with empty string
+      // Process each cell in the row
+      const processedRow = row.map((cell, colIdx) => {
+        const normalized = cell.toLowerCase().trim();
+        const isMissing = !cell || normalized === 'null' || normalized === 'na' || 
+                         normalized === 'n/a' || normalized === 'nan' || cell.trim() === '';
+        
+        if (isMissing && columnStats[colIdx]) {
+          preprocessingMetadata.imputedCells++;
+          // Impute with calculated value (mean/median for numeric, mode for categorical)
+          return String(columnStats[colIdx].imputeValue);
         }
+        
         return cell.trim();
       });
 
       // Check for duplicates
-      const rowKey = cleanedCells.join('|');
+      const rowKey = processedRow.join('|');
       if (seenRows.has(rowKey)) {
         preprocessingMetadata.duplicatesRemoved++;
         continue;
       }
       seenRows.add(rowKey);
 
-      processedRows.push(cleanedCells);
+      processedRows.push(processedRow);
+    }
+
+    // Prepare column statistics for metadata
+    for (let colIdx = 0; colIdx < headers.length; colIdx++) {
+      const stats = columnStats[colIdx];
+      if (stats) {
+        preprocessingMetadata.columnStats[headers[colIdx]] = {
+          type: stats.type,
+          missingImputed: stats.missingCount,
+          ...(stats.type === 'numeric' ? {
+            mean: stats.mean,
+            median: stats.median,
+            min: stats.min,
+            max: stats.max,
+            outliers: stats.outlierCount,
+          } : {
+            mode: stats.mode,
+            uniqueValues: stats.uniqueValues,
+          })
+        };
+        
+        if (stats.type === 'numeric' && stats.outlierCount > 0) {
+          preprocessingMetadata.outliersDetected += stats.outlierCount;
+        }
+      }
     }
 
     preprocessingMetadata.steps = [
-      "Removed empty rows",
-      "Cleaned missing values (null, NA, N/A)",
-      "Removed duplicate rows",
-      "Trimmed whitespace from all cells"
+      "Detected column types (numeric vs categorical)",
+      `Imputed ${preprocessingMetadata.imputedCells} missing values using median (numeric) or mode (categorical)`,
+      `Detected ${preprocessingMetadata.outliersDetected} outliers (preserved in data)`,
+      `Removed ${preprocessingMetadata.duplicatesRemoved} duplicate rows`,
+      `Removed ${preprocessingMetadata.removedRows} completely empty rows`,
+      "Applied data type-specific cleaning strategies"
     ];
+
+    console.log(`Preprocessing summary: ${processedRows.length} rows retained from ${originalRowCount} original rows`);
+    console.log(`Imputed ${preprocessingMetadata.imputedCells} missing values intelligently`);
 
     // Create processed CSV content
     const processedContent = [
@@ -163,7 +308,7 @@ serve(async (req) => {
       throw new Error(`Failed to update dataset: ${updateError.message}`);
     }
 
-    console.log("Preprocessing completed successfully");
+    console.log("Intelligent preprocessing completed successfully");
 
     return new Response(
       JSON.stringify({
