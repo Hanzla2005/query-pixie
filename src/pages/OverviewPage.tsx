@@ -10,6 +10,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import DatasetSelectorDialog from "@/components/DatasetSelectorDialog";
+import { DataFilterPanel } from "@/components/DataFilterPanel";
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -29,10 +30,33 @@ const OverviewPage = () => {
   const [loading, setLoading] = useState(true);
   const [dataset, setDataset] = useState<any>(null);
   const [data, setData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [activeFilters, setActiveFilters] = useState<any[]>([]);
   const [statistics, setStatistics] = useState<any>({});
   const [isDownloading, setIsDownloading] = useState(false);
   const [selectorOpen, setSelectorOpen] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  // Derive column metadata from data
+  const columns = data.length > 0
+    ? Object.keys(data[0]).map((colName) => {
+        const sampleValues = data.slice(0, 100).map((row) => row[colName]);
+        const numericValues = sampleValues.filter((v) => !isNaN(parseFloat(v)));
+        const isNumeric = numericValues.length / sampleValues.length > 0.8;
+        const uniqueCount = new Set(sampleValues).size;
+        const isCategorical = uniqueCount < 20 && !isNumeric;
+
+        return {
+          name: colName,
+          type: isNumeric ? "numeric" as const : isCategorical ? "categorical" as const : "text" as const,
+        };
+      })
+    : [];
+
+  const handleFilterChange = (newFilteredData: any[], filters: any[]) => {
+    setFilteredData(newFilteredData);
+    setActiveFilters(filters);
+  };
 
   useEffect(() => {
     if (datasetId) {
@@ -306,6 +330,33 @@ const OverviewPage = () => {
           Download Report
         </Button>
       </div>
+
+      {/* Data Filter Panel */}
+      {data.length > 0 && columns.length > 0 && (
+        <DataFilterPanel
+          data={data}
+          columns={columns}
+          onFilterChange={handleFilterChange}
+        />
+      )}
+
+      {/* Filter Summary */}
+      {activeFilters.length > 0 && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">
+                  Showing {filteredData.length} of {data.length} rows
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {activeFilters.length} filter{activeFilters.length !== 1 ? 's' : ''} applied
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Report Content */}
       <div ref={reportRef} className="space-y-6">

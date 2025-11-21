@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, datasetId } = await req.json();
+    const { messages, datasetId, filteredData, filterSummary } = await req.json();
     
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -100,8 +100,15 @@ serve(async (req) => {
         } else if (dataset.preprocessing_status === 'pending') {
           preprocessingInfo = '\n\nNote: Dataset is currently being preprocessed. Data shown may not be fully cleaned yet.';
         }
+
+        // Add filter context if filters are active
+        let filterContext = "";
+        if (filteredData && filteredData.length > 0) {
+          filterContext = `\n\n${filterSummary || 'User has applied filters to the data.'}\nYou should use the filtered dataset for analysis and visualizations.`;
+          sampleData = filteredData.slice(0, 100); // Use filtered data for sample
+        }
         
-        systemPrompt += `\n\nYou are currently analyzing a dataset named "${dataset.name}" with ${dataset.row_count} rows and the following columns: ${JSON.stringify(dataset.columns)}.${preprocessingInfo}\n\nYou have access to sample data (100 rows) for creating visualizations. When creating 3D charts, use the actual sample data from the dataset.\n\nSample data preview:\n${JSON.stringify(sampleData.slice(0, 5), null, 2)}`;
+        systemPrompt += `\n\nYou are currently analyzing a dataset named "${dataset.name}" with ${dataset.row_count} rows and the following columns: ${JSON.stringify(dataset.columns)}.${preprocessingInfo}${filterContext}\n\nYou have access to sample data (100 rows) for creating visualizations.${filteredData ? ' Use the filtered data provided.' : ''}\n\nSample data preview:\n${JSON.stringify(sampleData.slice(0, 5), null, 2)}`;
       }
     }
 
