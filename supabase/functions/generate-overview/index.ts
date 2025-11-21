@@ -145,44 +145,55 @@ serve(async (req) => {
     });
 
     // Prepare prompt for AI
-    const systemPrompt = `You are a data analysis expert. Analyze the provided dataset and generate comprehensive insights.
+    const systemPrompt = `You are a data analysis expert. Analyze the provided dataset and generate comprehensive, detailed insights.
 
 Return your response as a structured JSON object with this exact format:
 {
   "summary": "Brief overview of the dataset and key findings",
   "numericInsights": [
     {
-      "columnName": "name of numeric column",
+      "columnName": "exact column name from dataset",
       "mean": number,
       "median": number,
       "min": number,
       "max": number,
+      "stdDev": number,
       "trend": "description of trend or pattern observed",
-      "description": "detailed description of what this data shows and its significance"
+      "description": "Detailed statistical description in this format: '[Column] ranges from [min] to [max], with a mean of [mean] and median of [median]. [Additional insights about distribution, outliers, patterns, and what makes this column distinctive or useful for analysis.]'"
     }
   ],
   "categoricalInsights": [
     {
-      "columnName": "name of categorical column",
+      "columnName": "exact column name from dataset",
       "topValues": [{"name": "value", "count": number}],
       "uniqueCount": number,
-      "description": "detailed description of the distribution and what it reveals"
+      "description": "detailed description of the distribution, dominant categories, and what patterns reveal about the data"
     }
   ],
   "keyFindings": ["finding 1", "finding 2", "finding 3"]
 }
 
-Important: Do not include visualizationType fields. Focus on statistical analysis and insights.`;
+CRITICAL: Use the EXACT column names from the dataset. For numeric columns, provide detailed statistical narratives that include ranges, means, medians, and interpretive insights.`;
 
     const userPrompt = `Analyze this dataset:
 Dataset Name: ${dataset.name}
 Total Rows: ${dataset.row_count}
-Columns: ${JSON.stringify(dataset.columns)}
+Column Headers: ${headers.join(', ')}
 
 Sample Data (first 100 rows):
 ${JSON.stringify(sampleRows, null, 2)}
 
-Provide comprehensive analysis with insights and visualization recommendations.`;
+For each NUMERIC column, calculate:
+- Mean, median, min, max, standard deviation
+- Describe the range and distribution characteristics
+- Identify any notable patterns or outliers
+
+For each CATEGORICAL column, identify:
+- Top categories and their frequencies
+- Distribution patterns
+- Any dominant or unusual categories
+
+Provide comprehensive statistical narratives for each column.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -236,11 +247,22 @@ Provide comprehensive analysis with insights and visualization recommendations.`
       const jsonStr = jsonMatch ? jsonMatch[1] : content;
       insights = JSON.parse(jsonStr);
       
+      console.log("Parsed insights:", JSON.stringify(insights, null, 2));
+      console.log("Available distributions:", Object.keys(distributions));
+      
       // Add distribution data to numeric insights
-      insights.numericInsights = insights.numericInsights?.map((insight: any) => ({
-        ...insight,
-        distribution: distributions[insight.columnName] || []
-      })) || [];
+      insights.numericInsights = insights.numericInsights?.map((insight: any) => {
+        const dist = distributions[insight.columnName];
+        console.log(`Mapping distribution for ${insight.columnName}:`, dist ? `${dist.length} bins` : "not found");
+        return {
+          ...insight,
+          distribution: dist || []
+        };
+      }) || [];
+      
+      console.log("Final numeric insights with distributions:", 
+        insights.numericInsights.map((i: any) => ({ name: i.columnName, distLen: i.distribution?.length || 0 }))
+      );
       
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
