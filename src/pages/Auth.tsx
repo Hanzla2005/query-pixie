@@ -136,7 +136,7 @@ const Auth = () => {
               </TabsList>
 
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-4" aria-label="Sign in form">
                   <div className="space-y-2">
                     <Label htmlFor="signin-email">Email</Label>
                     <Input
@@ -145,7 +145,10 @@ const Auth = () => {
                       type="email"
                       placeholder="you@example.com"
                       required
+                      autoComplete="email"
+                      aria-describedby="email-hint"
                     />
+                    <span id="email-hint" className="sr-only">Enter your registered email address</span>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signin-password">Password</Label>
@@ -155,16 +158,19 @@ const Auth = () => {
                       type="password"
                       placeholder="••••••••"
                       required
+                      autoComplete="current-password"
+                      aria-describedby="password-hint"
                     />
+                    <span id="password-hint" className="sr-only">Enter your password</span>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
                     {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
                 </form>
               </TabsContent>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-4" aria-label="Sign up form">
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
@@ -173,7 +179,10 @@ const Auth = () => {
                       type="email"
                       placeholder="you@example.com"
                       required
+                      autoComplete="email"
+                      aria-describedby="signup-email-hint"
                     />
+                    <span id="signup-email-hint" className="sr-only">Enter a valid email address for your account</span>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
@@ -184,7 +193,12 @@ const Auth = () => {
                       placeholder="••••••••"
                       required
                       minLength={6}
+                      autoComplete="new-password"
+                      aria-describedby="signup-password-hint"
                     />
+                    <p id="signup-password-hint" className="text-xs text-muted-foreground">
+                      Must be at least 6 characters long
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-confirm">Confirm Password</Label>
@@ -195,9 +209,12 @@ const Auth = () => {
                       placeholder="••••••••"
                       required
                       minLength={6}
+                      autoComplete="new-password"
+                      aria-describedby="signup-confirm-hint"
                     />
+                    <span id="signup-confirm-hint" className="sr-only">Re-enter your password to confirm</span>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
                     {isLoading ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>

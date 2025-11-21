@@ -31,10 +31,10 @@ export function AppSidebar() {
   const hasActiveItem = menuItems.some((item) => isActive(item.url));
 
   return (
-    <Sidebar collapsible="icon" className={open ? "w-64" : "w-16"}>
+    <Sidebar collapsible="icon" className={open ? "w-64" : "w-16"} aria-label="Main navigation">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-3 py-4">
-          <img src={logo} alt="DataMind" className="h-8 w-8" />
+          <img src={logo} alt="DataMind logo" className="h-8 w-8" />
           {open && (
             <div className="flex flex-col">
               <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -47,9 +47,8 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          {/* <SidebarGroupLabel>Navigation</SidebarGroupLabel> */}
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu role="navigation" aria-label="Main menu">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
@@ -57,8 +56,10 @@ export function AppSidebar() {
                       to={item.url}
                       className="hover:bg-muted/50 transition-all duration-200"
                       activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
+                      aria-label={item.title}
+                      aria-current={isActive(item.url) ? "page" : undefined}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-4 w-4" aria-hidden="true" />
                       {open && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
