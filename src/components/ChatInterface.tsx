@@ -223,8 +223,8 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <ScrollArea className="flex-1 pr-4 overflow-y-auto" ref={scrollRef}>
+    <div className="flex flex-col h-full overflow-hidden" role="region" aria-label="Chat conversation">
+      <ScrollArea className="flex-1 pr-4 overflow-y-auto" ref={scrollRef} role="log" aria-live="polite" aria-relevant="additions">
         <div className="space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-12">
@@ -306,16 +306,28 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSend} className="mt-4 flex gap-2 flex-shrink-0">
+      <form onSubmit={handleSend} className="mt-4 flex gap-2 flex-shrink-0" role="search" aria-label="Chat with AI">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about your data..."
           disabled={isLoading}
           className="flex-1"
+          aria-label="Type your message"
+          aria-describedby="chat-hint"
+          autoComplete="off"
         />
-        <Button type="submit" disabled={isLoading || !input.trim()}>
-          <Send className="h-4 w-4" />
+        <span id="chat-hint" className="sr-only">
+          {datasetId 
+            ? "Ask questions about your dataset or request visualizations" 
+            : "Ask general questions about data analysis"}
+        </span>
+        <Button 
+          type="submit" 
+          disabled={isLoading || !input.trim()}
+          aria-label={isLoading ? "Sending message..." : "Send message"}
+        >
+          <Send className="h-4 w-4" aria-hidden="true" />
         </Button>
       </form>
     </div>

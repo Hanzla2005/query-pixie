@@ -196,15 +196,15 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
 
   return (
     <>
-      <ScrollArea className="h-64">
+      <ScrollArea className="h-64" role="region" aria-label="Dataset list">
         {datasets.length === 0 ? (
-          <div className="text-center py-8">
-            <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+          <div className="text-center py-8" role="status">
+            <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-2" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">No datasets yet</p>
             <p className="text-xs text-muted-foreground">Upload your first file to get started</p>
           </div>
         ) : (
-        <div className="space-y-2">
+        <div className="space-y-2" role="list">
           {datasets.map((dataset) => (
             <button
               key={dataset.id}
@@ -214,6 +214,9 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
                   ? "border-primary bg-primary/5"
                   : "border-border hover:bg-muted/50"
               }`}
+              role="listitem"
+              aria-label={`${dataset.name}, ${dataset.row_count !== null ? `${dataset.row_count.toLocaleString()} rows` : ''}, ${formatDate(dataset.created_at)}`}
+              aria-pressed={selectedId === dataset.id}
             >
               <div className="flex items-start justify-between">
                 <div className="flex gap-3 flex-1">
@@ -246,8 +249,9 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
                         size="icon"
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => e.stopPropagation()}
+                        aria-label={`More options for ${dataset.name}`}
                       >
-                        <MoreVertical className="h-4 w-4" />
+                        <MoreVertical className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

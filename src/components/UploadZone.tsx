@@ -107,6 +107,8 @@ const UploadZone = () => {
       onDragLeave={handleDragOut}
       onDragOver={handleDrag}
       onDrop={handleDrop}
+      role="region"
+      aria-label="File upload area"
     >
       <input
         type="file"
@@ -115,10 +117,11 @@ const UploadZone = () => {
         accept=".csv,.xlsx"
         multiple
         onChange={handleFileInput}
+        aria-label="Choose files to upload"
       />
-      <label htmlFor="file-upload" className="cursor-pointer">
+      <label htmlFor="file-upload" className="cursor-pointer block">
         <div className="flex flex-col items-center gap-4">
-          <div className="rounded-full bg-primary/10 p-4">
+          <div className="rounded-full bg-primary/10 p-4" aria-hidden="true">
             {isDragging ? (
               <FileSpreadsheet className="h-8 w-8 text-primary" />
             ) : (
@@ -129,7 +132,12 @@ const UploadZone = () => {
             <p className="font-medium text-foreground mb-1">
               {isDragging ? "Drop your files here" : "Click to upload or drag and drop"}
             </p>
-            <p className="text-sm text-muted-foreground">CSV or XLSX files (max 50MB)</p>
+            <p className="text-sm text-muted-foreground">
+              CSV or XLSX files (max 50MB)
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Supported formats: .csv, .xlsx • Maximum size: 50MB per file
+            </p>
           </div>
         </div>
       </label>
