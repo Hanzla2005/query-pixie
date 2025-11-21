@@ -1,7 +1,10 @@
-import { Database, BarChart3, MessageSquare, TrendingUp, Table } from "lucide-react";
+import { Database, BarChart3, MessageSquare, TrendingUp, Table, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -25,10 +29,21 @@ const menuItems = [
 export function AppSidebar() {
   const { open } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + "/");
   const hasActiveItem = menuItems.some((item) => isActive(item.url));
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      navigate("/auth");
+    } catch (error) {
+      toast.error("Error signing out");
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className={open ? "w-64" : "w-16"} aria-label="Main navigation">
@@ -69,6 +84,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Button
+              variant="ghost"
+              className="w-full justify-start hover:bg-destructive/10 hover:text-destructive transition-colors"
+              onClick={handleSignOut}
+              aria-label="Sign out of your account"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              {open && <span className="ml-2">Sign Out</span>}
+            </Button>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
