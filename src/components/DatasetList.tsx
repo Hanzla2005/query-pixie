@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, MoreVertical, RefreshCw, BarChart3 } from "lucide-react";
+import { FileSpreadsheet, MoreVertical, RefreshCw, BarChart3, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface DatasetListProps {
   onSelect: (datasetId: string) => void;
@@ -31,6 +41,8 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [datasetToDelete, setDatasetToDelete] = useState<Dataset | null>(null);
 
   const fetchDatasets = async () => {
     try {
@@ -105,6 +117,68 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
     }
   };
 
+  const handleDeleteClick = (dataset: Dataset, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDatasetToDelete(dataset);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!datasetToDelete) return;
+
+    const loadingToast = toast.loading(`Deleting ${datasetToDelete.name}...`);
+
+    try {
+      // First, get the dataset to find the file path
+      const { data: dataset, error: fetchError } = await supabase
+        .from("datasets")
+        .select("file_path")
+        .eq("id", datasetToDelete.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete the file from storage
+      if (dataset?.file_path) {
+        const { error: storageError } = await supabase.storage
+          .from("datasets")
+          .remove([dataset.file_path]);
+
+        if (storageError) {
+          console.warn("Storage delete error:", storageError);
+          // Continue with database deletion even if storage deletion fails
+        }
+      }
+
+      // Delete the dataset from the database
+      const { error: deleteError } = await supabase
+        .from("datasets")
+        .delete()
+        .eq("id", datasetToDelete.id);
+
+      if (deleteError) throw deleteError;
+
+      toast.dismiss(loadingToast);
+      toast.success(`${datasetToDelete.name} deleted successfully!`);
+
+      // Clear selection if the deleted dataset was selected
+      if (selectedId === datasetToDelete.id) {
+        setSelectedId(null);
+        onSelect("");
+      }
+
+      // Refresh the dataset list
+      await fetchDatasets();
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.dismiss(loadingToast);
+      toast.error(`Failed to delete ${datasetToDelete.name}: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setDeleteDialogOpen(false);
+      setDatasetToDelete(null);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -119,14 +193,15 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
   };
 
   return (
-    <ScrollArea className="h-64">
-      {datasets.length === 0 ? (
-        <div className="text-center py-8">
-          <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">No datasets yet</p>
-          <p className="text-xs text-muted-foreground">Upload your first file to get started</p>
-        </div>
-      ) : (
+    <>
+      <ScrollArea className="h-64">
+        {datasets.length === 0 ? (
+          <div className="text-center py-8">
+            <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">No datasets yet</p>
+            <p className="text-xs text-muted-foreground">Upload your first file to get started</p>
+          </div>
+        ) : (
         <div className="space-y-2">
           {datasets.map((dataset) => (
             <button
@@ -182,6 +257,13 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
                       <RefreshCw className={`h-4 w-4 mr-2 ${processingIds.has(dataset.id) ? 'animate-spin' : ''}`} />
                       {processingIds.has(dataset.id) ? 'Processing...' : 'Reprocess Data'}
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => handleDeleteClick(dataset, e)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Dataset
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -190,6 +272,28 @@ const DatasetList = ({ onSelect }: DatasetListProps) => {
         </div>
       )}
     </ScrollArea>
+
+    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Dataset</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete <span className="font-semibold">{datasetToDelete?.name}</span>?
+            This action cannot be undone. The dataset file and all associated data will be permanently removed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDeleteConfirm}
+            className="bg-destructive hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 };
 
