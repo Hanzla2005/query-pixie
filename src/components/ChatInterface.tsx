@@ -2,12 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, Mic, MicOff } from "lucide-react";
+import { Send, Bot, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ChartDisplay from "./ChartDisplay";
 import Chart3D from "./Chart3D";
-import { AudioRecorder, blobToBase64 } from "@/utils/audioRecorder";
 
 interface Message {
   id: string;
@@ -40,10 +39,7 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const audioRecorderRef = useRef<AudioRecorder | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -226,83 +222,6 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
     }
   };
 
-  const handleVoiceInput = async () => {
-    if (isRecording) {
-      // Stop recording
-      try {
-        setIsRecording(false);
-        setIsTranscribing(true);
-        
-        if (!audioRecorderRef.current) {
-          throw new Error('No audio recorder available');
-        }
-
-        const audioBlob = await audioRecorderRef.current.stop();
-        console.log('Audio blob captured:', audioBlob.size);
-        
-        // Convert blob to base64
-        const base64Audio = await blobToBase64(audioBlob);
-        console.log('Audio converted to base64, length:', base64Audio.length);
-        
-        // Send to transcription edge function
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error("Not authenticated");
-          return;
-        }
-
-        toast.loading("Transcribing audio...");
-        
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ audio: base64Audio }),
-          }
-        );
-
-        toast.dismiss();
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to transcribe audio");
-        }
-
-        const { text } = await response.json();
-        console.log('Transcription result:', text);
-        
-        if (text && text.trim()) {
-          setInput(text);
-          toast.success("Transcription complete!");
-        } else {
-          toast.error("No speech detected");
-        }
-      } catch (error) {
-        console.error('Voice input error:', error);
-        toast.error(error instanceof Error ? error.message : "Failed to process voice input");
-      } finally {
-        setIsTranscribing(false);
-        audioRecorderRef.current = null;
-      }
-    } else {
-      // Start recording
-      try {
-        audioRecorderRef.current = new AudioRecorder();
-        await audioRecorderRef.current.start();
-        setIsRecording(true);
-        toast.success("Recording... Click again to stop");
-      } catch (error) {
-        console.error('Recording start error:', error);
-        toast.error(error instanceof Error ? error.message : "Failed to start recording");
-        audioRecorderRef.current = null;
-      }
-    }
-  };
-
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <ScrollArea className="flex-1 pr-4 overflow-y-auto" ref={scrollRef}>
@@ -388,24 +307,14 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
       </ScrollArea>
 
       <form onSubmit={handleSend} className="mt-4 flex gap-2 flex-shrink-0">
-        <Button
-          type="button"
-          variant={isRecording ? "destructive" : "outline"}
-          size="icon"
-          onClick={handleVoiceInput}
-          disabled={isLoading || isTranscribing}
-          className={isRecording ? "animate-pulse" : ""}
-        >
-          {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-        </Button>
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={isTranscribing ? "Transcribing..." : "Ask about your data or use voice input..."}
-          disabled={isLoading || isRecording || isTranscribing}
+          placeholder="Ask about your data..."
+          disabled={isLoading}
           className="flex-1"
         />
-        <Button type="submit" disabled={isLoading || !input.trim() || isRecording || isTranscribing}>
+        <Button type="submit" disabled={isLoading || !input.trim()}>
           <Send className="h-4 w-4" />
         </Button>
       </form>
