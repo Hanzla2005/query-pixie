@@ -1,10 +1,11 @@
-import { Database, BarChart3, MessageSquare, TrendingUp, Table, LogOut } from "lucide-react";
+import { Database, BarChart3, MessageSquare, TrendingUp, Table, LogOut, HelpCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import {
   Sidebar,
   SidebarContent,
@@ -31,6 +32,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const { restartOnboarding } = useOnboarding();
 
   const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + "/");
   const hasActiveItem = menuItems.some((item) => isActive(item.url));
@@ -86,6 +88,17 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <Button
+              variant="ghost"
+              className="w-full justify-start hover:bg-accent hover:text-accent-foreground transition-colors"
+              onClick={restartOnboarding}
+              aria-label="Restart onboarding tour"
+            >
+              <HelpCircle className="h-4 w-4" aria-hidden="true" />
+              {open && <span className="ml-2">Help Tour</span>}
+            </Button>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <Button
               variant="ghost"
