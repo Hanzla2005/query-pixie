@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Dialog,
@@ -16,6 +16,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 const OnboardingTour = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const {
     isActive,
     currentStep,
@@ -35,6 +36,14 @@ const OnboardingTour = () => {
     }
   }, [currentStep, isActive, currentStepData, navigate, location.pathname]);
 
+  const handleNextStep = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      nextStep();
+      setIsTransitioning(false);
+    }, 200);
+  };
+
   if (!isActive || !currentStepData) return null;
 
   const progress = ((currentStep + 1) / totalSteps) * 100;
@@ -42,12 +51,12 @@ const OnboardingTour = () => {
   return (
     <Dialog open={isActive} onOpenChange={(open) => !open && skipOnboarding()}>
       <DialogContent 
-        className="sm:max-w-[500px]"
+        className="sm:max-w-[500px] animate-scale-in"
         aria-describedby="onboarding-description"
       >
-        <DialogHeader>
+        <DialogHeader className={isTransitioning ? "animate-fade-out" : "animate-fade-in"}>
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
             <DialogTitle className="text-xl">
               {currentStepData.title}
             </DialogTitle>
@@ -59,21 +68,21 @@ const OnboardingTour = () => {
 
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Step {currentStep + 1} of {totalSteps}</span>
-            <span>{Math.round(progress)}% complete</span>
+            <span className="animate-fade-in">Step {currentStep + 1} of {totalSteps}</span>
+            <span className="animate-fade-in">{Math.round(progress)}% complete</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} className="h-2 transition-all duration-500" />
         </div>
 
         <DialogFooter className="flex-row justify-between sm:justify-between gap-2">
           <Button
             variant="ghost"
             onClick={skipOnboarding}
-            className="text-muted-foreground"
+            className="text-muted-foreground hover-scale"
           >
             Skip Tour
           </Button>
-          <Button onClick={nextStep}>
+          <Button onClick={handleNextStep} className="hover-scale">
             {isLastStep ? "Get Started!" : "Next"}
           </Button>
         </DialogFooter>
