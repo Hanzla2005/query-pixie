@@ -130,180 +130,192 @@ const PreprocessingPreview = ({ datasetId, datasetName, onConfirm }: Preprocessi
 
               <ScrollArea className="flex-1 mt-4">
                 <TabsContent value="summary" className="mt-0 space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-primary" />
-                        Overall Changes
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">Original Rows</p>
-                          <p className="text-2xl font-bold">{previewData.original.rowCount.toLocaleString()}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">Processed Rows</p>
-                          <p className="text-2xl font-bold text-primary">{previewData.processed.rowCount.toLocaleString()}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">Rows Removed</p>
-                          <p className="text-2xl font-bold text-destructive">{previewData.changes.rowsRemovedTotal.toLocaleString()}</p>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                          <AlertCircle className="h-5 w-5 text-orange-500" />
-                          <div>
-                            <p className="text-sm font-medium">Cells Imputed</p>
-                            <p className="text-lg font-bold">{previewData.changes.cellsImputed.toLocaleString()}</p>
+                  <div className="max-h-[500px] overflow-y-auto pr-2 space-y-4 no-scrollbar">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                          Overall Changes
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-sm text-muted-foreground">Original Rows</p>
+                            <p className="text-2xl font-bold">{previewData.original.rowCount.toLocaleString()}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm text-muted-foreground">Processed Rows</p>
+                            <p className="text-2xl font-bold text-primary">{previewData.processed.rowCount.toLocaleString()}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm text-muted-foreground">Rows Removed</p>
+                            <p className="text-2xl font-bold text-destructive">{previewData.changes.rowsRemovedTotal.toLocaleString()}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                          <div>
-                            <p className="text-sm font-medium">Duplicates Removed</p>
-                            <p className="text-lg font-bold">{previewData.changes.duplicatesRemoved.toLocaleString()}</p>
+
+                        <Separator />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                            <AlertCircle className="h-5 w-5 text-orange-500" />
+                            <div>
+                              <p className="text-sm font-medium">Cells Imputed</p>
+                              <p className="text-lg font-bold">{previewData.changes.cellsImputed.toLocaleString()}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <div>
+                              <p className="text-sm font-medium">Duplicates Removed</p>
+                              <p className="text-lg font-bold">{previewData.changes.duplicatesRemoved.toLocaleString()}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Preprocessing Steps</CardTitle>
-                      <CardDescription>Operations that will be performed</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ol className="space-y-2">
-                        {previewData.steps.map((step, idx) => (
-                          <li key={idx} className="flex items-start gap-3">
-                            <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
-                            <span className="text-sm">{step}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    </CardContent>
-                  </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Preprocessing Steps</CardTitle>
+                        <CardDescription>Operations that will be performed</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ol className="space-y-2">
+                          {previewData.steps.map((step, idx) => (
+                            <li key={idx} className="flex items-start gap-3">
+                              <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
+                              <span className="text-sm">{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="columns" className="mt-0">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Column-by-Column Changes</CardTitle>
-                      <CardDescription>See how each column will be processed</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {previewData.columnChanges.map((col, idx) => (
-                          <div key={idx} className="border rounded-lg p-4 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-semibold">{col.name}</h4>
-                                <Badge variant={col.type === 'numeric' ? 'default' : 'secondary'}>
-                                  {col.type}
-                                </Badge>
+                  <div className="max-h-[500px] overflow-y-auto pr-2 space-y-4 no-scrollbar">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Column-by-Column Changes</CardTitle>
+                        <CardDescription>See how each column will be processed</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {previewData.columnChanges.map((col, idx) => (
+                            <div key={idx} className="border rounded-lg p-4 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-semibold">{col.name}</h4>
+                                  <Badge variant={col.type === 'numeric' ? 'default' : 'secondary'}>
+                                    {col.type}
+                                  </Badge>
+                                </div>
+                                {col.missingBefore > 0 && (
+                                  <Badge variant="outline">
+                                    {col.missingBefore} missing ({col.missingPercentage}%)
+                                  </Badge>
+                                )}
                               </div>
                               {col.missingBefore > 0 && (
-                                <Badge variant="outline">
-                                  {col.missingBefore} missing ({col.missingPercentage}%)
-                                </Badge>
+                                <div className="text-sm text-muted-foreground">
+                                  <span className="font-medium">Strategy:</span> Impute with {col.imputationStrategy}
+                                  <span className="ml-2 text-primary font-mono">
+                                    ({typeof col.imputationValue === 'number'
+                                      ? col.imputationValue.toFixed(2)
+                                      : col.imputationValue})
+                                  </span>
+                                </div>
                               )}
                             </div>
-                            {col.missingBefore > 0 && (
-                              <div className="text-sm text-muted-foreground">
-                                <span className="font-medium">Strategy:</span> Impute with {col.imputationStrategy} 
-                                <span className="ml-2 text-primary font-mono">
-                                  ({typeof col.imputationValue === 'number' 
-                                    ? col.imputationValue.toFixed(2) 
-                                    : col.imputationValue})
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
                 </TabsContent>
 
                 <TabsContent value="before" className="mt-0">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Original Data Sample</CardTitle>
-                      <CardDescription>First 10 rows of your dataset</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left p-2 font-semibold bg-muted">#</th>
-                              {previewData.original.headers.map((header, idx) => (
-                                <th key={idx} className="text-left p-2 font-semibold bg-muted">
-                                  {header}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {previewData.original.sample.map((row, rowIdx) => (
-                              <tr key={rowIdx} className="border-b hover:bg-muted/50">
-                                <td className="p-2 text-muted-foreground">{rowIdx + 1}</td>
-                                {row.map((cell, cellIdx) => (
-                                  <td key={cellIdx} className="p-2">
-                                    {cell || <span className="text-destructive italic">missing</span>}
-                                  </td>
+                  <div className="max-h-[500px] overflow-y-auto pr-2 space-y-4 no-scrollbar">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Original Data Sample</CardTitle>
+                        <CardDescription>First 10 rows of your dataset</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left p-2 font-semibold bg-muted">#</th>
+                                {previewData.original.headers.map((header, idx) => (
+                                  <th key={idx} className="text-left p-2 font-semibold bg-muted">
+                                    {header}
+                                  </th>
                                 ))}
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </CardContent>
-                  </Card>
+                            </thead>
+                            <tbody>
+                              {previewData.original.sample.map((row, rowIdx) => (
+                                <tr key={rowIdx} className="border-b hover:bg-muted/50">
+                                  <td className="p-2 text-muted-foreground">{rowIdx + 1}</td>
+                                  {row.map((cell, cellIdx) => (
+                                    <td key={cellIdx} className="p-2">
+                                      {cell || <span className="text-destructive italic">missing</span>}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
                 </TabsContent>
 
                 <TabsContent value="after" className="mt-0">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Processed Data Sample</CardTitle>
-                      <CardDescription>First 10 rows after preprocessing</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left p-2 font-semibold bg-muted">#</th>
-                              {previewData.processed.headers.map((header, idx) => (
-                                <th key={idx} className="text-left p-2 font-semibold bg-muted">
-                                  {header}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {previewData.processed.sample.map((row, rowIdx) => (
-                              <tr key={rowIdx} className="border-b hover:bg-muted/50">
-                                <td className="p-2 text-muted-foreground">{rowIdx + 1}</td>
-                                {row.map((cell, cellIdx) => (
-                                  <td key={cellIdx} className="p-2">
-                                    {cell}
-                                  </td>
+                  <div className="max-h-[500px] overflow-y-auto pr-2 space-y-4 no-scrollbar">
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Processed Data Sample</CardTitle>
+                        <CardDescription>First 10 rows after preprocessing</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left p-2 font-semibold bg-muted">#</th>
+                                {previewData.processed.headers.map((header, idx) => (
+                                  <th key={idx} className="text-left p-2 font-semibold bg-muted">
+                                    {header}
+                                  </th>
                                 ))}
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </CardContent>
-                  </Card>
+                            </thead>
+                            <tbody>
+                              {previewData.processed.sample.map((row, rowIdx) => (
+                                <tr key={rowIdx} className="border-b hover:bg-muted/50">
+                                  <td className="p-2 text-muted-foreground">{rowIdx + 1}</td>
+                                  {row.map((cell, cellIdx) => (
+                                    <td key={cellIdx} className="p-2">
+                                      {cell}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
                 </TabsContent>
               </ScrollArea>
             </Tabs>
@@ -319,7 +331,7 @@ const PreprocessingPreview = ({ datasetId, datasetName, onConfirm }: Preprocessi
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog >
     </>
   );
 };

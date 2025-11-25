@@ -1,7 +1,6 @@
 import { Database, BarChart3, MessageSquare, TrendingUp, Table, LogOut, HelpCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
-import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className={open ? "w-64" : "w-16"} aria-label="Main navigation">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-3 py-4">
-          <img src={logo} alt="DataMind logo" className="h-8 w-8" />
+          <img src="/logo.png" alt="DataMind logo" className="h-8 w-8" />
           {open && (
             <div className="flex flex-col">
               <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
