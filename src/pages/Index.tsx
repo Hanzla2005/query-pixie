@@ -152,8 +152,23 @@ const Index = () => {
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-primary/5 to-background pt-20">
+        {/* Background Video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        >
+          <source src="/visualization-video.mp4" type="video/mp4" />
+          {/* Add your visualization video file to /public/visualization-video.mp4 */}
+        </video>
+        
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/70 to-background/80 z-[1]" />
+        
         {/* Animated particles background */}
-        <div ref={particlesRef} className="absolute inset-0 overflow-hidden">
+        <div ref={particlesRef} className="absolute inset-0 overflow-hidden z-[2]">
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
@@ -172,8 +187,8 @@ const Index = () => {
         </div>
 
         {/* Gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse z-[3]" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000 z-[3]" />
 
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="max-w-5xl mx-auto text-center">
