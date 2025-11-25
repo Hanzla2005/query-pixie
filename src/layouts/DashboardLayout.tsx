@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import OnboardingTour from "@/components/OnboardingTour";
 
 const DashboardLayout = () => {
   const [userEmail, setUserEmail] = useState<string>("");
@@ -81,6 +82,7 @@ const DashboardLayout = () => {
           </main>
         </div>
       </div>
+      <OnboardingTour />
     </SidebarProvider>
   );
 };
