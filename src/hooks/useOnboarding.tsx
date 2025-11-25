@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface OnboardingStep {
   page: string;
@@ -34,7 +34,20 @@ export const onboardingSteps: OnboardingStep[] = [
   }
 ];
 
-export const useOnboarding = () => {
+interface OnboardingContextType {
+  isActive: boolean;
+  currentStep: number;
+  currentStepData: OnboardingStep | undefined;
+  totalSteps: number;
+  nextStep: () => void;
+  skipOnboarding: () => void;
+  restartOnboarding: () => void;
+  isLastStep: boolean;
+}
+
+const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
+
+export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -69,7 +82,7 @@ export const useOnboarding = () => {
     setCurrentStep(0);
   };
 
-  return {
+  const value = {
     isActive,
     currentStep,
     currentStepData: onboardingSteps[currentStep],
@@ -79,4 +92,18 @@ export const useOnboarding = () => {
     restartOnboarding,
     isLastStep: currentStep === onboardingSteps.length - 1
   };
+
+  return (
+    <OnboardingContext.Provider value={value}>
+      {children}
+    </OnboardingContext.Provider>
+  );
+};
+
+export const useOnboarding = () => {
+  const context = useContext(OnboardingContext);
+  if (!context) {
+    throw new Error('useOnboarding must be used within OnboardingProvider');
+  }
+  return context;
 };
