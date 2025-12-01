@@ -144,6 +144,49 @@ serve(async (req) => {
       }
     });
 
+    // Calculate bivariate correlations between numeric columns
+    const numericColumns = headers.filter(header => {
+      const rawValues = sampleRows.map(row => row[header]).filter(v => v !== undefined && v !== null && String(v).trim() !== "");
+      const numericValues = rawValues.map(v => parseFloat(String(v).replace(/[^0-9.+-eE]/g, ""))).filter(v => !isNaN(v));
+      return numericValues.length > 0 && (rawValues.length > 0 ? numericValues.length / rawValues.length : 0) >= 0.6;
+    });
+
+    const correlations: any[] = [];
+    for (let i = 0; i < numericColumns.length; i++) {
+      for (let j = i + 1; j < numericColumns.length; j++) {
+        const col1 = numericColumns[i];
+        const col2 = numericColumns[j];
+        
+        const pairs = sampleRows.map(row => ({
+          x: parseFloat(String(row[col1]).replace(/[^0-9.+-eE]/g, "")),
+          y: parseFloat(String(row[col2]).replace(/[^0-9.+-eE]/g, ""))
+        })).filter(p => !isNaN(p.x) && !isNaN(p.y));
+        
+        if (pairs.length > 5) {
+          const n = pairs.length;
+          const sumX = pairs.reduce((sum, p) => sum + p.x, 0);
+          const sumY = pairs.reduce((sum, p) => sum + p.y, 0);
+          const sumXY = pairs.reduce((sum, p) => sum + p.x * p.y, 0);
+          const sumX2 = pairs.reduce((sum, p) => sum + p.x * p.x, 0);
+          const sumY2 = pairs.reduce((sum, p) => sum + p.y * p.y, 0);
+          
+          const correlation = (n * sumXY - sumX * sumY) / 
+            Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+          
+          if (!isNaN(correlation) && Math.abs(correlation) > 0.3) {
+            correlations.push({
+              column1: col1,
+              column2: col2,
+              correlation: correlation,
+              scatterData: pairs.slice(0, 100)
+            });
+          }
+        }
+      }
+    }
+
+    console.log(`Found ${correlations.length} significant correlations`);
+
     // Prepare prompt for AI
     const systemPrompt = `You are a data analysis expert. Analyze the provided dataset and generate comprehensive, detailed insights.
 
@@ -170,10 +213,19 @@ Return your response as a structured JSON object with this exact format:
       "description": "detailed description of the distribution, dominant categories, and what patterns reveal about the data"
     }
   ],
+  "bivariateInsights": [
+    {
+      "column1": "first column name",
+      "column2": "second column name",
+      "correlation": number,
+      "relationship": "description of the relationship (e.g., 'strong positive correlation', 'moderate negative correlation')",
+      "interpretation": "detailed interpretation of what this relationship means for the data"
+    }
+  ],
   "keyFindings": ["finding 1", "finding 2", "finding 3"]
 }
 
-CRITICAL: Use the EXACT column names from the dataset. For numeric columns, provide detailed statistical narratives that include ranges, means, medians, and interpretive insights.`;
+CRITICAL: Use the EXACT column names from the dataset. For numeric columns, provide detailed statistical narratives that include ranges, means, medians, and interpretive insights. For bivariate analysis, describe relationships between variables.`;
 
     const userPrompt = `Analyze this dataset:
 Dataset Name: ${dataset.name}
@@ -193,7 +245,19 @@ For each CATEGORICAL column, identify:
 - Distribution patterns
 - Any dominant or unusual categories
 
-Provide comprehensive statistical narratives for each column.`;
+BIVARIATE ANALYSIS - Significant correlations found:
+${correlations.length > 0 ? JSON.stringify(correlations.map(c => ({
+  column1: c.column1,
+  column2: c.column2,
+  correlation: c.correlation.toFixed(3)
+})), null, 2) : "No significant correlations found (threshold: |r| > 0.3)"}
+
+For each correlation, provide:
+- Relationship type (positive/negative, strength)
+- Interpretation of what this relationship reveals
+- Potential insights or implications
+
+Provide comprehensive statistical narratives for each column and relationship.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -260,9 +324,22 @@ Provide comprehensive statistical narratives for each column.`;
         };
       }) || [];
       
+      // Add scatter plot data to bivariate insights
+      insights.bivariateInsights = insights.bivariateInsights?.map((insight: any) => {
+        const corrData = correlations.find(c => 
+          (c.column1 === insight.column1 && c.column2 === insight.column2) ||
+          (c.column1 === insight.column2 && c.column2 === insight.column1)
+        );
+        return {
+          ...insight,
+          scatterData: corrData?.scatterData || []
+        };
+      }) || [];
+      
       console.log("Final numeric insights with distributions:", 
         insights.numericInsights.map((i: any) => ({ name: i.columnName, distLen: i.distribution?.length || 0 }))
       );
+      console.log("Bivariate insights:", insights.bivariateInsights?.length || 0);
       
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);

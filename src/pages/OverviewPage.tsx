@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, ArrowLeft, TrendingUp, PieChart as PieChartIcon, BarChart3, Activity, Database } from "lucide-react";
 import { toast } from "sonner";
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ScatterChart, Scatter } from "recharts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import DatasetSelectorDialog from "@/components/DatasetSelectorDialog";
@@ -118,6 +118,9 @@ const OverviewPage = () => {
 
         stats.distributions[insight.columnName] = insight.topValues || [];
       });
+
+      // Process bivariate insights
+      stats.bivariateAnalysis = insights.bivariateInsights || [];
 
       setStatistics(stats);
       toast.dismiss();
@@ -488,6 +491,78 @@ const OverviewPage = () => {
             </Card>
           )
         ))}
+
+        {/* Bivariate Analysis */}
+        {statistics.bivariateAnalysis && statistics.bivariateAnalysis.length > 0 && (
+          <Card className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                <CardTitle>Bivariate Analysis - Variable Relationships</CardTitle>
+              </div>
+              <CardDescription>
+                Analysis of correlations and relationships between numeric variables
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {statistics.bivariateAnalysis.map((bivar: any, idx: number) => (
+                <div key={idx} className="space-y-4">
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold mb-2">
+                      {bivar.column1} vs {bivar.column2}
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Correlation: </span>
+                        <span className={`font-bold ${Math.abs(bivar.correlation) > 0.7 ? 'text-primary' : 'text-foreground'}`}>
+                          {bivar.correlation?.toFixed(3)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Relationship: </span>
+                        <span className="font-medium">{bivar.relationship}</span>
+                      </div>
+                    </div>
+                    {bivar.interpretation && (
+                      <p className="mt-3 text-sm">{bivar.interpretation}</p>
+                    )}
+                  </div>
+                  {bivar.scatterData && bivar.scatterData.length > 0 && (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <ScatterChart>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          type="number" 
+                          dataKey="x" 
+                          name={bivar.column1}
+                          stroke="hsl(var(--muted-foreground))"
+                          label={{ value: bivar.column1, position: 'insideBottom', offset: -5, fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis 
+                          type="number" 
+                          dataKey="y" 
+                          name={bivar.column2}
+                          stroke="hsl(var(--muted-foreground))"
+                          label={{ value: bivar.column2, angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <Tooltip 
+                          cursor={{ strokeDasharray: '3 3' }}
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                          formatter={(value: any) => value.toFixed(2)}
+                        />
+                        <Scatter data={bivar.scatterData} fill="hsl(var(--primary))" />
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Categorical Insights */}
         {categoricalColumns.slice(0, 4).map(([colName, colInfo]: any) => {
