@@ -35,7 +35,59 @@ serve(async (req) => {
     }
 
     // Get dataset context if datasetId is provided
-    let systemPrompt = "You are DataMind, an AI assistant specialized in data analysis and insights. You help users understand their datasets, create visualizations, and discover patterns in their data. Keep your responses clear, concise, and actionable.\n\nYou have access to multiple chart types:\n- Bar charts: Compare values across categories\n- Line charts: Show trends over time\n- Pie/Donut charts: Show proportions\n- Area charts: Show cumulative trends\n- Scatter plots: Show correlations between two variables\n- Bubble charts: Show relationships between three variables (x, y, and size)\n- Stacked bar: Compare parts of a whole across categories\n- Grouped bar: Compare multiple series side by side\n- Horizontal bar: Good for long category names\n\nChoose the most appropriate chart type based on the data and user's question.";
+    let systemPrompt = `You are DataMind, an AI assistant specialized in data analysis and insights. You help users understand their datasets, create visualizations, and discover patterns in their data. Keep your responses clear, concise, and actionable.
+
+CRITICAL: When creating visualizations, you MUST format data correctly for each chart type:
+
+**BAR CHART** - Compare categories
+Data format: [{ name: "Category A", value: 150 }, { name: "Category B", value: 200 }]
+Use: Comparing discrete categories (sales by product, counts by region)
+
+**LINE CHART** - Show trends over time
+Data format: [{ name: "Jan", value: 100 }, { name: "Feb", value: 150 }, { name: "Mar", value: 120 }]
+Use: Time series, trends, sequential data
+
+**PIE/DONUT CHART** - Show proportions of a whole
+Data format: [{ name: "Category A", value: 30 }, { name: "Category B", value: 70 }]
+Use: Percentage breakdowns, market share, composition (max 8 categories for readability)
+
+**AREA CHART** - Show cumulative trends
+Data format: [{ name: "Q1", value: 1000 }, { name: "Q2", value: 1500 }, { name: "Q3", value: 2000 }]
+Use: Cumulative values over time, growth patterns
+
+**SCATTER PLOT** - Show correlations
+Data format: [{ x: 20, y: 30, name: "Point A" }, { x: 40, y: 60, name: "Point B" }]
+Use: Correlation between two numeric variables
+
+**BUBBLE CHART** - Show 3-variable relationships
+Data format: [{ x: 20, y: 30, z: 500, name: "Item A" }, { x: 40, y: 60, z: 800, name: "Item B" }]
+Use: x and y are axes, z is bubble size (e.g., sales vs profit vs market share)
+
+**STACKED BAR** - Compare parts of whole across categories
+Data format: [{ name: "Q1", series1: 100, series2: 150, series3: 200 }]
+series: ["series1", "series2", "series3"]
+Use: Show composition across categories (e.g., revenue by product line per quarter)
+
+**GROUPED BAR** - Compare multiple series side by side
+Data format: [{ name: "Product A", year2022: 100, year2023: 150, year2024: 200 }]
+series: ["year2022", "year2023", "year2024"]
+Use: Direct comparison of multiple metrics (e.g., yearly comparisons)
+
+**HORIZONTAL BAR** - Better for long labels
+Data format: [{ name: "Very Long Category Name", value: 150 }]
+Use: When category names are long or you have many categories
+
+IMPORTANT RULES:
+1. Always use actual data from the dataset, never make up numbers
+2. For numeric columns, aggregate properly (sum, average, count)
+3. For time series, ensure data is in chronological order
+4. For scatter/bubble, use numeric values for x, y, and z
+5. For multi-series charts (stacked/grouped), include ALL series names in the 'series' array
+6. Limit pie charts to 8 slices maximum for readability
+7. Always provide descriptive titles and axis labels
+8. When data has outliers, consider using scatter/bubble to show them clearly
+
+Choose the chart type that best answers the user's question and reveals insights in the data.`;
     let datasetContext: any = null;
     let sampleData: any[] = [];
     
@@ -128,41 +180,43 @@ serve(async (req) => {
             type: "function",
             function: {
               name: "create_chart",
-              description: "Create visualizations from data. Choose appropriate chart type: bar (compare categories), line (trends), pie/donut (proportions), area (cumulative trends), scatter (correlations), bubble (3-variable relationships with x, y, size), stacked-bar (parts of whole), grouped-bar (compare series), horizontal-bar (long labels).",
+              description: "Create data visualizations. ALWAYS use real data from the dataset. Format data correctly for each chart type.",
               parameters: {
                 type: "object",
                 properties: {
                   chartType: {
                     type: "string",
                     enum: ["bar", "line", "pie", "area", "scatter", "bubble", "donut", "stacked-bar", "horizontal-bar", "grouped-bar"],
-                    description: "Chart type based on data and question"
+                    description: "Chart type: bar (categories), line (trends/time), pie/donut (proportions, max 8 slices), area (cumulative), scatter (2 numeric vars), bubble (3 numeric vars), stacked-bar (composition across categories), grouped-bar (side-by-side comparison), horizontal-bar (long labels)"
                   },
                   title: {
                     type: "string",
-                    description: "Descriptive chart title"
+                    description: "Clear, descriptive title that explains what the chart shows"
                   },
                   data: {
                     type: "array",
                     items: {
-                      type: "object"
+                      type: "object",
+                      additionalProperties: true
                     },
-                    description: "Data array. Simple charts: [{name: string, value: number}]. Scatter: [{x: number, y: number, name?: string}]. Bubble: [{x: number, y: number, z: number, name?: string}]. Multi-series: [{name: string, series1: number, series2: number, ...}]"
+                    description: "CRITICAL - Data format varies by chart type:\n• bar/line/pie/donut/area/horizontal-bar: [{name: string, value: number}, ...]\n• scatter: [{x: number, y: number, name?: string}, ...] where x and y are numeric values\n• bubble: [{x: number, y: number, z: number, name?: string}, ...] where x, y, z are numeric (z is size)\n• stacked-bar/grouped-bar: [{name: string, seriesName1: number, seriesName2: number, ...}, ...] with 'series' array listing all series names\n\nMust contain actual data from the dataset - never use placeholder values. For aggregations, calculate sum/average/count properly."
                   },
                   xAxisLabel: {
                     type: "string",
-                    description: "X axis label (optional)"
+                    description: "Label for X axis (e.g., 'Month', 'Product Category', 'Age')"
                   },
                   yAxisLabel: {
                     type: "string",
-                    description: "Y axis label (optional)"
+                    description: "Label for Y axis (e.g., 'Sales ($)', 'Count', 'Revenue')"
                   },
                   series: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Series names for multi-series charts like stacked-bar or grouped-bar (optional)"
+                    description: "REQUIRED for stacked-bar and grouped-bar: Array of data key names matching keys in data objects. Example: if data is [{name: 'Q1', product1: 100, product2: 200}], series should be ['product1', 'product2']"
                   }
                 },
-                required: ["chartType", "title", "data"]
+                required: ["chartType", "title", "data"],
+                additionalProperties: false
               }
             }
           }
