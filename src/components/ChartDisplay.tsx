@@ -49,6 +49,20 @@ const ChartDisplay = ({
   yAxisLabel,
   series = [],
 }: ChartDisplayProps) => {
+  // Validate and prepare data
+  if (!data || data.length === 0) {
+    return (
+      <Card className="w-full shadow-lg border-2 bg-card/50 backdrop-blur">
+        <CardHeader className="pb-4 border-b">
+          <CardTitle className="text-xl font-semibold text-foreground">{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <p className="text-muted-foreground text-center py-8">No data available for visualization</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const renderChart = () => {
     switch (chartType) {
       case "bar":
