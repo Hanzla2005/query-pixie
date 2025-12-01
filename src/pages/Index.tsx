@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { BarChart3, Brain, Upload, MessageSquare, TrendingUp, Shield, Sparkles, Zap, Database } from "lucide-react";
+import { BarChart3, Brain, Upload, MessageSquare, TrendingUp, Shield, Sparkles, Zap, Database, BrainCircuit } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { gsap } from "gsap";
@@ -151,155 +151,192 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-primary/5 to-background pt-20">
-        {/* Background Video */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0"
-        >
-          <source src="/visualization-video.mp4" type="video/mp4" />
-          {/* Add your visualization video file to /public/visualization-video.mp4 */}
-        </video>
-        
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/70 to-background/80 z-[1]" />
-        
-        {/* Animated particles background */}
-        <div ref={particlesRef} className="absolute inset-0 overflow-hidden z-[2]">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="particle absolute"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                width: `${Math.random() * 100 + 50}px`,
-                height: `${Math.random() * 100 + 50}px`,
-                background: `radial-gradient(circle, hsl(var(--primary) / ${Math.random() * 0.3 + 0.1}) 0%, transparent 70%)`,
-                borderRadius: '50%',
-                pointerEvents: 'none'
-              }}
-            />
-          ))}
-        </div>
+      <section
+        ref={heroRef}
+        className="relative min-h-screen flex items-center bg-black overflow-hidden pt-24"
+      >
+        {/* Background Image */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "url('/hero.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            opacity: 0.4
+          }}
+        />
 
-        {/* Gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse z-[3]" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000 z-[3]" />
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-white/15 to-white/15" />
 
-        <div className="container mx-auto px-4 py-20 relative z-10">
-          <div className="max-w-5xl mx-auto text-center">
-            <div className="inline-block mb-8">
-              <img src={logo} alt="DataMind" className="h-24 w-24 mx-auto drop-shadow-2xl animate-float" />
+        <div className="container mx-auto px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center lg:items-start lg:justify-between gap-16">
+
+            {/* LEFT CONTENT */}
+            <div className="lg:w-2/3">
+              <p className="text-sm tracking-widest text-gray-300 uppercase">
+                Built for Analysts, Researchers & Businesses
+              </p>
+
+              <h1 className="mt-6 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight">
+                <span className="bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
+                  Transform Data
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-primary/80 to-white bg-clip-text text-transparent">
+                  Into AI Insights
+                </span>
+              </h1>
+
+              <p className="max-w-xl mt-6 text-lg text-gray-300 sm:text-xl">
+                Upload datasets, chat with AI, and unlock powerful analytics with
+                stunning visualizations & intelligent insights.
+              </p>
+
+              {/* CTA BUTTONS */}
+              <div className="flex flex-col sm:flex-row gap-6 mt-10">
+                <Link to="/auth">
+                  <Button
+                    size="lg"
+                    className="px-10 py-6 text-lg bg-gradient-to-r from-primary to-primary/70 rounded-full shadow-lg hover:shadow-primary/40 hover:scale-[1.07] transition-transform"
+                  >
+                    <BrainCircuit className="mr-2 h-5 w-5" />
+                    Start Analyzing Free
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Hero Info / Stats */}
+              <div className="inline-flex items-center pt-8 mt-12 border-gray-800">
+
+                <span className="ml-2 text-base text-gray-300">
+                  10,000+ insights generated last week
+                </span>
+              </div>
+
+              {/* Stats */}
+              <div ref={statsRef} className="grid grid-cols-3 gap-8 mt-16 max-w-2xl">
+                <div className="text-center">
+                  <div className="stat-number text-5xl font-bold text-primary" data-target="10000">
+                    0
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Active Users</p>
+                </div>
+
+                <div className="text-center">
+                  <div className="stat-number text-5xl font-bold text-primary" data-target="50000">
+                    0
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Datasets Analyzed</p>
+                </div>
+
+                <div className="text-center">
+                  <div className="stat-number text-5xl font-bold text-primary" data-target="99">
+                    0
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Accuracy %</p>
+                </div>
+              </div>
             </div>
-            
-            <h2 className="hero-title text-6xl md:text-8xl font-bold mb-8 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
-              Transform Data into
-              <span className="block mt-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text">
-                Insights with AI
-              </span>
-            </h2>
-            
-            <p className="hero-subtitle text-xl md:text-3xl mb-12 text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Upload datasets, chat with AI, and unlock powerful analytics with stunning 3D visualizations
-            </p>
-            
-            <div className="hero-cta flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Link to="/auth">
-                <Button size="lg" className="text-lg px-10 py-7 bg-gradient-to-r from-primary to-primary/80 hover:shadow-glow hover:scale-110 transition-all group">
-                  <Sparkles className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
-                  Start Analyzing Free
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button size="lg" variant="outline" className="text-lg px-10 py-7 border-2 hover:bg-primary/10 hover:scale-110 transition-all">
-                  Watch Demo
-                </Button>
-              </Link>
-            </div>
 
-            {/* Stats Section */}
-            <div ref={statsRef} className="grid grid-cols-3 gap-8 mt-20 max-w-3xl mx-auto">
-              <div className="text-center">
-                <div className="stat-number text-5xl font-bold text-primary mb-2" data-target="10000">0</div>
-                <div className="text-sm text-muted-foreground">Active Users</div>
-              </div>
-              <div className="text-center">
-                <div className="stat-number text-5xl font-bold text-primary mb-2" data-target="50000">0</div>
-                <div className="text-sm text-muted-foreground">Datasets Analyzed</div>
-              </div>
-              <div className="text-center">
-                <div className="stat-number text-5xl font-bold text-primary mb-2" data-target="99">0</div>
-                <div className="text-sm text-muted-foreground">Accuracy %</div>
-              </div>
+            {/* RIGHT IMAGE */}
+            <div className="lg:absolute lg:right-0 lg:top-20 xl:top-10">
+              <img
+                className="w-full max-w-sm md:max-w-md lg:max-w-lg drop-shadow-2xl"
+                src="/3d-visual.png"
+                alt="3D Visualization"
+              />
             </div>
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-primary/50 rounded-full flex items-start justify-center p-2">
-            <div className="w-1 h-3 bg-primary rounded-full animate-pulse" />
-          </div>
-        </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-32 bg-gradient-to-b from-background via-muted/20 to-background relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)] pointer-events-none" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-24">
-            <div className="inline-block mb-4 px-6 py-2 bg-primary/10 rounded-full border border-primary/20">
-              <span className="text-sm font-semibold text-primary flex items-center gap-2">
-                <Zap className="h-4 w-4" />
-                Powerful Features
-              </span>
-            </div>
-            <h3 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+
+
+      {/* Features Section — Minimal Soft Grid Style */}
+      <section className="py-24 sm:py-32 lg:py-40 relative overflow-hidden">
+
+        {/* Flipped Background Image */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "url('/hero.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            transform: "scaleY(-1)", // Flip only the image vertically
+            zIndex: 0,
+          }}
+        />
+
+        {/* Bright Soft Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-white/15 to-white/15 z-10" />
+
+        {/* Content */}
+        <div className="container mx-auto px-4 max-w-7xl relative z-20">
+
+          {/* Heading */}
+          <div className="text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
               Everything You Need to Analyze Data
-            </h3>
-            <p className="text-muted-foreground text-xl max-w-3xl mx-auto">
-              Advanced AI-powered tools for data exploration, visualization, and insights
+            </h2>
+            <p className="mt-4 md:mt-6 text-lg text-muted-foreground max-w-xl mx-auto">
+              AI-powered tools to simplify your workflow from upload to insights
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+
+          {/* Grid */}
+          <div className="
+      grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+      mt-16 lg:mt-24 text-center
+      gap-y-16 md:gap-x-12
+    ">
             {[
-              { icon: Upload, title: "Easy Upload", desc: "Drag and drop CSV or XLSX files. Automatic parsing and schema detection.", color: "from-blue-500 to-cyan-500" },
-              { icon: MessageSquare, title: "AI Chat Assistant", desc: "Ask questions in natural language. Get instant answers and insights.", color: "from-purple-500 to-pink-500" },
-              { icon: BarChart3, title: "Smart Visualizations", desc: "Generate 2D and 3D charts automatically. Customize and export easily.", color: "from-green-500 to-emerald-500" },
-              { icon: TrendingUp, title: "Advanced Analytics", desc: "Statistical analysis, correlation detection, and trend identification.", color: "from-orange-500 to-red-500" },
-              { icon: Brain, title: "AI-Powered Insights", desc: "Discover hidden patterns and get actionable recommendations.", color: "from-indigo-500 to-purple-500" },
-              { icon: Shield, title: "Secure & Private", desc: "Enterprise-grade encryption. Your data stays completely private.", color: "from-teal-500 to-cyan-500" }
+              { icon: Upload, title: "Easy Upload", desc: "Drag & drop CSVs or spreadsheets with instant schema detection." },
+              { icon: MessageSquare, title: "AI Chat Assistant", desc: "Ask questions in natural language and get quick insights." },
+              { icon: BarChart3, title: "Smart Visualizations", desc: "Auto-generate interactive 2D/3D charts in seconds." },
+              { icon: TrendingUp, title: "Advanced Analytics", desc: "Correlation detection, trends, and statistical breakdowns." },
+              { icon: Brain, title: "AI-Powered Insights", desc: "Reveal patterns and receive actionable recommendations." },
+              { icon: Shield, title: "Secure & Private", desc: "Enterprise-level encryption keeps your data protected." },
             ].map((feature, index) => (
-              <Card key={index} className="feature-card group relative border-primary/20 shadow-lg hover:shadow-glow transition-all duration-500 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden hover:scale-105 hover:-rotate-1">
-                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-500" style={{
-                  background: `linear-gradient(135deg, var(--primary), transparent)`
-                }} />
-                <CardContent className="p-8 relative z-10">
-                  <div className={`rounded-2xl bg-gradient-to-br ${feature.color} w-16 h-16 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300`}>
-                    <feature.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <h4 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors">{feature.title}</h4>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {feature.desc}
-                  </p>
-                </CardContent>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
-              </Card>
+              <div
+                key={index}
+                className={`
+            px-8 lg:px-14
+            ${index >= 3 ? "md:border-t md:border-gray-300/50" : ""}
+            ${index % 3 !== 0 ? "md:border-l md:border-gray-300/50" : ""}
+          `}
+              >
+                {/* Icon */}
+                <div className="w-16 h-16 flex mt-5 items-center justify-center mx-auto rounded-2xl">
+                  <feature.icon className="h-12 w-12 text-primary" />
+                </div>
+
+                {/* Title */}
+                <h3 className="mt-5 text-xl font-bold text-foreground">
+                  {feature.title}
+                </h3>
+
+                {/* Description */}
+                <p className="mt-4 text-base text-muted-foreground">
+                  {feature.desc}
+                </p>
+              </div>
             ))}
           </div>
+
         </div>
       </section>
+
+
+
 
       {/* 3D Visualization Showcase */}
       <section className="py-32 bg-gradient-to-br from-primary/5 via-background to-primary/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM4ODg4ODgiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAtMy4zMTQtMi42ODYtNi02LTZzLTYgMi42ODYtNiA2IDIuNjg2IDYgNiA2IDYtMi42ODYgNi02em0wIDI4YzAtMy4zMTQtMi42ODYtNi02LTZzLTYgMi42ODYtNiA2IDIuNjg2IDYgNiA2IDYtMi42ODYgNi02eiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-6xl mx-auto text-center">
             <div className="inline-block mb-6 px-6 py-2 bg-primary/10 rounded-full border border-primary/20">
@@ -314,7 +351,7 @@ const Index = () => {
             <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto">
               Explore your data in three dimensions with interactive charts powered by cutting-edge AI
             </p>
-            
+
             <div className="grid md:grid-cols-2 gap-8 mt-16">
               <div className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-primary/20 rounded-2xl p-8 hover:scale-105 transition-all duration-300 shadow-lg">
                 <div className="h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl mb-6 flex items-center justify-center">
@@ -323,7 +360,7 @@ const Index = () => {
                 <h4 className="text-2xl font-bold mb-3">3D Scatter Plots</h4>
                 <p className="text-muted-foreground">Visualize multi-dimensional relationships in your data with interactive 3D scatter plots</p>
               </div>
-              
+
               <div className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-primary/20 rounded-2xl p-8 hover:scale-105 transition-all duration-300 shadow-lg">
                 <div className="h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl mb-6 flex items-center justify-center">
                   <TrendingUp className="h-24 w-24 text-primary animate-pulse" />
@@ -340,11 +377,11 @@ const Index = () => {
       <section className="py-32 bg-gradient-to-br from-primary via-primary/90 to-primary text-primary-foreground relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.1),transparent_50%)]" />
-        
+
         {/* Animated background elements */}
         <div className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse delay-1000" />
-        
+
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="max-w-4xl mx-auto">
             <h3 className="text-5xl md:text-6xl font-bold mb-8 leading-tight">
@@ -359,7 +396,7 @@ const Index = () => {
                 Start Free Today
               </Button>
             </Link>
-            
+
             <div className="mt-16 flex flex-wrap justify-center gap-8 text-sm opacity-80">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
