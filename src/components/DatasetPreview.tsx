@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Hash, Type } from "lucide-react";
@@ -39,6 +39,8 @@ interface PreviewData {
 const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hoveredBar, setHoveredBar] = useState<{ column: string; index: number } | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!datasetId) return;
@@ -99,14 +101,37 @@ const DatasetPreview = ({ datasetId }: DatasetPreviewProps) => {
               <div className="grid lg:grid-cols-[1fr,400px] gap-8">
                 {/* Histogram */}
                 <div className="space-y-2">
-                  <div className="h-64 flex items-end gap-1 px-2">
+                  <div className="h-64 flex items-end gap-1 px-2 relative">
                     {stats.histogram?.map((bin, idx) => (
                       <div
                         key={idx}
-                        className="flex-1 bg-[hsl(var(--primary))] rounded-t transition-all hover:opacity-80"
+                        className="flex-1 bg-[hsl(var(--primary))] rounded-t transition-all hover:opacity-80 cursor-pointer relative"
                         style={{ height: `${(bin.count / Math.max(...(stats.histogram?.map(b => b.count) || [1]))) * 100}%` }}
+                        onMouseEnter={(e) => {
+                          setHoveredBar({ column, index: idx });
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.top });
+                        }}
+                        onMouseLeave={() => setHoveredBar(null)}
                       />
                     ))}
+                    {hoveredBar?.column === column && stats.histogram && (
+                      <div 
+                        className="fixed z-50 bg-card border border-border rounded-lg shadow-lg px-3 py-2 text-sm pointer-events-none"
+                        style={{
+                          left: `${tooltipPosition.x}px`,
+                          top: `${tooltipPosition.y - 60}px`,
+                          transform: 'translateX(-50%)'
+                        }}
+                      >
+                        <div className="font-semibold">
+                          {stats.histogram[hoveredBar.index].bin.toFixed(2)} - {stats.histogram[hoveredBar.index].binEnd.toFixed(2)}
+                        </div>
+                        <div className="text-muted-foreground">
+                          Count: {stats.histogram[hoveredBar.index].count}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground px-2">
                     <span>{stats.min?.toFixed(1)}</span>
