@@ -9,6 +9,7 @@ import featureAiChat from "@/assets/feature-ai-chat.png";
 import featureVisualizations from "@/assets/feature-visualizations.png";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -178,9 +179,10 @@ const Index = () => {
               <p className="text-xs text-muted-foreground hidden sm:block">AI-Powered Analytics</p>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            <ThemeToggle />
             <Link to="/auth">
-              <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-white/5 transition-all">
+              <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-all">
                 Sign In
               </Button>
             </Link>
