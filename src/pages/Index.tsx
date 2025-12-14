@@ -1,9 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Brain, Upload, MessageSquare, TrendingUp, Shield, Sparkles, Zap, Database, BrainCircuit, ArrowRight, Play } from "lucide-react";
+import { BarChart3, Brain, Upload, MessageSquare, TrendingUp, Shield, Sparkles, Zap, Database, BrainCircuit, ArrowRight, Play, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import datamindLogo from "@/assets/datamind-logo.png";
 import heroBackground from "@/assets/hero-background.png";
+import featureOverview from "@/assets/feature-overview.png";
+import featureAiChat from "@/assets/feature-ai-chat.png";
+import featureVisualizations from "@/assets/feature-visualizations.png";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -13,6 +16,7 @@ const Index = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     // GSAP: Floating particles animation
@@ -164,10 +168,10 @@ const Index = () => {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-glass border-b border-border/30">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/30 rounded-xl blur-lg logo-glow" />
-              <img src={logo} alt="DataMind" className="h-10 w-10 relative z-10" />
+              <img src={datamindLogo} alt="DataMind" className="h-12 w-12 relative z-10 rounded-xl" />
             </div>
             <div>
               <h1 className="text-2xl font-bold gradient-text">DataMind</h1>
@@ -220,8 +224,13 @@ const Index = () => {
                     Start Analyzing Free
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="px-8 py-6 text-lg border-border/50 bg-white/5 hover:bg-white/10 backdrop-blur-sm">
-                  <Play className="mr-2 h-5 w-5" />
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="px-8 py-6 text-lg border-primary/30 bg-primary/5 hover:bg-primary/10 backdrop-blur-sm text-foreground"
+                  onClick={() => setShowVideo(true)}
+                >
+                  <Play className="mr-2 h-5 w-5 text-primary" />
                   Watch Demo
                 </Button>
               </div>
@@ -320,6 +329,30 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Video Modal */}
+      {showVideo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-xl" onClick={() => setShowVideo(false)} />
+          <div className="relative w-full max-w-5xl glass-card rounded-3xl overflow-hidden">
+            <button 
+              onClick={() => setShowVideo(false)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <div className="aspect-video">
+              <iframe
+                className="w-full h-full"
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                title="DataMind Demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Visualization Showcase */}
       <section className="relative py-24 lg:py-32 overflow-hidden">
         {/* Background Glow */}
@@ -331,33 +364,78 @@ const Index = () => {
           <div className="text-center mb-16 glass-animate">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-6">
               <BarChart3 className="h-4 w-4 text-primary" />
-              <span className="text-sm text-foreground/80">Advanced Capabilities</span>
+              <span className="text-sm text-foreground/80">Core Features</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Stunning <span className="gradient-text">3D Visualizations</span>
+              Powerful <span className="gradient-text">Analytics Tools</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Explore your data in three dimensions with interactive charts powered by cutting-edge AI
+              Everything you need to understand your data with AI-powered insights
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div className="glass-card p-8 rounded-3xl group hover:scale-[1.02] transition-all duration-500 glass-animate">
-              <div className="h-56 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-6 overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-glow opacity-50" />
-                <BarChart3 className="h-24 w-24 text-primary animate-pulse relative z-10" />
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Dataset Overview */}
+            <div className="glass-card p-6 rounded-3xl group hover:scale-[1.02] transition-all duration-500 glass-animate">
+              <div className="h-48 rounded-2xl overflow-hidden relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10" />
+                <img 
+                  src={featureOverview} 
+                  alt="Dataset Overview & Analysis" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
               </div>
-              <h3 className="text-2xl font-bold mb-3">3D Scatter Plots</h3>
-              <p className="text-muted-foreground">Visualize multi-dimensional relationships in your data with interactive 3D scatter plots</p>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Database className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold">Dataset Overview</h3>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Get comprehensive summaries, key findings, and statistical breakdowns of your entire dataset powered by AI analysis.
+              </p>
             </div>
 
-            <div className="glass-card p-8 rounded-3xl group hover:scale-[1.02] transition-all duration-500 glass-animate">
-              <div className="h-56 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center mb-6 overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-glow opacity-50" />
-                <TrendingUp className="h-24 w-24 text-accent animate-pulse relative z-10" />
+            {/* Smart Visualizations */}
+            <div className="glass-card p-6 rounded-3xl group hover:scale-[1.02] transition-all duration-500 glass-animate delay-100">
+              <div className="h-48 rounded-2xl overflow-hidden relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10" />
+                <img 
+                  src={featureVisualizations} 
+                  alt="Smart Visualizations" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Surface Plots</h3>
-              <p className="text-muted-foreground">Analyze complex trends and patterns with beautiful 3D surface visualizations</p>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-accent" />
+                </div>
+                <h3 className="text-xl font-bold">Smart Visualizations</h3>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Auto-generate beautiful charts including scatter plots, bar charts, pie charts, and trend lines based on your data.
+              </p>
+            </div>
+
+            {/* AI Chat */}
+            <div className="glass-card p-6 rounded-3xl group hover:scale-[1.02] transition-all duration-500 glass-animate delay-200">
+              <div className="h-48 rounded-2xl overflow-hidden relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10" />
+                <img 
+                  src={featureAiChat} 
+                  alt="AI Chat Assistant" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+              </div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center">
+                  <MessageSquare className="h-5 w-5 text-secondary" />
+                </div>
+                <h3 className="text-xl font-bold">AI Chat Assistant</h3>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Ask questions about your data in natural language and receive instant insights, recommendations, and answers.
+              </p>
             </div>
           </div>
         </div>
@@ -415,7 +493,7 @@ const Index = () => {
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/30 rounded-lg blur-md" />
-                <img src={logo} alt="DataMind" className="h-8 w-8 relative z-10" />
+                <img src={datamindLogo} alt="DataMind" className="h-10 w-10 relative z-10 rounded-lg" />
               </div>
               <div>
                 <span className="text-lg font-bold gradient-text">DataMind</span>
