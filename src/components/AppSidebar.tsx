@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import datamindLogo from "@/assets/datamind-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -50,10 +51,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className={open ? "w-64" : "w-16"} aria-label="Main navigation">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-3 py-4">
-          <img src="/logo.png" alt="DataMind logo" className="h-8 w-8" />
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/20 rounded-lg blur-md" />
+            <img src={datamindLogo} alt="DataMind logo" className="h-9 w-9 relative z-10 rounded-lg" />
+          </div>
           {open && (
             <div className="flex flex-col">
-              <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              <h2 className="text-lg font-bold gradient-text">
                 DataMind
               </h2>
               <p className="text-xs text-muted-foreground">Intelligent Analytics</p>

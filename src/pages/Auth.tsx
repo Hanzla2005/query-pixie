@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import datamindLogo from "@/assets/datamind-logo.png";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -136,7 +137,7 @@ const Auth = () => {
           <Link to="/" className="inline-flex items-center gap-3 mb-6">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/40 rounded-xl blur-lg animate-pulse-glow" />
-              <Brain className="h-12 w-12 text-primary relative z-10" />
+              <img src={datamindLogo} alt="DataMind" className="h-14 w-14 relative z-10 rounded-xl" />
             </div>
             <span className="text-4xl font-bold gradient-text">DataMind</span>
           </Link>

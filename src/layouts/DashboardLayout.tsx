@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Brain, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import OnboardingTour from "@/components/OnboardingTour";
 import { OnboardingProvider } from "@/hooks/useOnboarding";
+import datamindLogo from "@/assets/datamind-logo.png";
 
 const DashboardLayout = () => {
   const [userEmail, setUserEmail] = useState<string>("");
@@ -71,7 +72,7 @@ const DashboardLayout = () => {
               <Link to="/dashboard" className="flex items-center gap-3" aria-label="DataMind home">
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/30 rounded-lg blur-md" />
-                  <Brain className="h-6 w-6 text-primary relative z-10" aria-hidden="true" />
+                  <img src={datamindLogo} alt="DataMind" className="h-8 w-8 relative z-10 rounded-lg" />
                 </div>
                 <h1 className="text-xl font-bold gradient-text">DataMind</h1>
               </Link>

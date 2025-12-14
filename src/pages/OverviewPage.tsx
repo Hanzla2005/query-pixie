@@ -12,14 +12,14 @@ import jsPDF from "jspdf";
 import DatasetSelectorDialog from "@/components/DatasetSelectorDialog";
 
 const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--chart-6))',
-  'hsl(var(--chart-7))',
-  'hsl(var(--chart-8))',
+  'hsl(190, 95%, 55%)',   // Primary cyan
+  'hsl(160, 85%, 50%)',   // Teal green  
+  'hsl(270, 85%, 65%)',   // Purple accent
+  'hsl(330, 80%, 60%)',   // Pink
+  'hsl(45, 95%, 55%)',    // Gold
+  'hsl(220, 90%, 60%)',   // Electric blue
+  'hsl(0, 75%, 55%)',     // Red
+  'hsl(120, 70%, 50%)',   // Green
 ];
 
 const OverviewPage = () => {
@@ -428,12 +428,15 @@ const OverviewPage = () => {
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }} 
+                        backgroundColor: 'hsl(220, 25%, 12%)', 
+                        border: '1px solid hsl(220, 20%, 25%)',
+                        borderRadius: '8px',
+                        color: 'hsl(210, 20%, 98%)'
+                      }}
+                      itemStyle={{ color: 'hsl(210, 20%, 98%)' }}
+                      labelStyle={{ color: 'hsl(210, 20%, 98%)' }}
                     />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="count" fill="hsl(190, 95%, 55%)" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -473,10 +476,13 @@ const OverviewPage = () => {
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }} 
+                        backgroundColor: 'hsl(220, 25%, 12%)', 
+                        border: '1px solid hsl(220, 20%, 25%)',
+                        borderRadius: '8px',
+                        color: 'hsl(210, 20%, 98%)'
+                      }}
+                      itemStyle={{ color: 'hsl(210, 20%, 98%)' }}
+                      labelStyle={{ color: 'hsl(210, 20%, 98%)' }}
                     />
                     <Area 
                       type="monotone" 
@@ -548,13 +554,16 @@ const OverviewPage = () => {
                         <Tooltip 
                           cursor={{ strokeDasharray: '3 3' }}
                           contentStyle={{ 
-                            backgroundColor: 'hsl(var(--card))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px'
+                            backgroundColor: 'hsl(220, 25%, 12%)', 
+                            border: '1px solid hsl(220, 20%, 25%)',
+                            borderRadius: '8px',
+                            color: 'hsl(210, 20%, 98%)'
                           }}
+                          itemStyle={{ color: 'hsl(210, 20%, 98%)' }}
+                          labelStyle={{ color: 'hsl(210, 20%, 98%)' }}
                           formatter={(value: any) => value.toFixed(2)}
                         />
-                        <Scatter data={bivar.scatterData} fill="hsl(var(--primary))" />
+                        <Scatter data={bivar.scatterData} fill="hsl(190, 95%, 55%)" />
                       </ScatterChart>
                     </ResponsiveContainer>
                   )}
@@ -591,7 +600,7 @@ const OverviewPage = () => {
                           labelLine={false}
                           label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
-                          fill="hsl(var(--primary))"
+                          fill="hsl(190, 95%, 55%)"
                           dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"}
                         >
                           {statistics.distributions[colName].map((_: any, index: number) => (
@@ -600,10 +609,13 @@ const OverviewPage = () => {
                         </Pie>
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'hsl(var(--card))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px'
-                          }} 
+                            backgroundColor: 'hsl(220, 25%, 12%)', 
+                            border: '1px solid hsl(220, 20%, 25%)',
+                            borderRadius: '8px',
+                            color: 'hsl(210, 20%, 98%)'
+                          }}
+                          itemStyle={{ color: 'hsl(210, 20%, 98%)' }}
+                          labelStyle={{ color: 'hsl(210, 20%, 98%)' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -614,12 +626,15 @@ const OverviewPage = () => {
                         <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={100} />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'hsl(var(--card))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px'
-                          }} 
+                            backgroundColor: 'hsl(220, 25%, 12%)', 
+                            border: '1px solid hsl(220, 20%, 25%)',
+                            borderRadius: '8px',
+                            color: 'hsl(210, 20%, 98%)'
+                          }}
+                          itemStyle={{ color: 'hsl(210, 20%, 98%)' }}
+                          labelStyle={{ color: 'hsl(210, 20%, 98%)' }}
                         />
-                        <Bar dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"} fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
+                        <Bar dataKey={statistics.distributions[colName][0]?.value !== undefined ? "value" : "count"} fill="hsl(190, 95%, 55%)" radius={[0, 8, 8, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
