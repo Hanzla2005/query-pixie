@@ -10,6 +10,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import OnboardingTour from "@/components/OnboardingTour";
 import { OnboardingProvider } from "@/hooks/useOnboarding";
 import datamindLogo from "@/assets/datamind-logo.png";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const DashboardLayout = () => {
   const [userEmail, setUserEmail] = useState<string>("");
@@ -76,13 +77,14 @@ const DashboardLayout = () => {
                 </div>
                 <h1 className="text-xl font-bold gradient-text">DataMind</h1>
               </Link>
-              <div className="ml-auto flex gap-4 items-center">
+              <div className="ml-auto flex gap-3 items-center">
                 <span className="text-sm text-muted-foreground hidden md:inline" aria-label="Logged in as">{userEmail}</span>
+                <ThemeToggle />
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={handleSignOut}
-                  className="text-foreground/70 hover:text-foreground hover:bg-white/5"
+                  className="text-foreground/70 hover:text-foreground hover:bg-muted/50"
                   aria-label="Sign out of your account"
                 >
                   <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
