@@ -12,96 +12,96 @@ Premium, Futuristic, AI-Driven Aesthetic
 
 @layer base {
   :root {
-    /* Core Colors - Light Theme */
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    /* Core Colors - Light Theme (Clean & Professional) */
+    --background: 220 20% 97%;
+    --foreground: 220 30% 15%;
 
     /* Glass Card Effects */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --card-glass: 210 40% 96% / 0.8;
+    --card-foreground: 220 30% 15%;
+    --card-glass: 220 20% 98% / 0.9;
 
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220 30% 15%;
 
-    /* Primary - Cyan/Teal */
-    --primary: 190 95% 40%;
+    /* Primary - Deep Teal */
+    --primary: 185 85% 35%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Electric Blue */
-    --secondary: 220 90% 50%;
+    /* Secondary - Rich Indigo */
+    --secondary: 240 60% 55%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Accent - Purple/Violet */
-    --accent: 270 85% 55%;
+    /* Accent - Vivid Purple */
+    --accent: 265 75% 50%;
     --accent-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 210 40% 94%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 15% 40%;
 
     /* Destructive */
-    --destructive: 0 84% 60%;
+    --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders & Inputs */
-    --border: 214 32% 85%;
-    --input: 214 32% 91%;
-    --ring: 190 95% 40%;
+    --border: 220 20% 85%;
+    --input: 220 15% 92%;
+    --ring: 185 85% 35%;
 
-    /* Chart Colors - Vibrant Palette */
-    --chart-1: 190 95% 40%;
-    --chart-2: 160 85% 40%;
-    --chart-3: 270 85% 55%;
-    --chart-4: 330 80% 50%;
-    --chart-5: 45 95% 45%;
-    --chart-6: 220 90% 50%;
-    --chart-7: 0 75% 50%;
-    --chart-8: 120 70% 40%;
+    /* Chart Colors - Rich & Distinct for Light Mode */
+    --chart-1: 185 85% 35%;
+    --chart-2: 150 70% 35%;
+    --chart-3: 265 75% 50%;
+    --chart-4: 340 75% 50%;
+    --chart-5: 35 90% 45%;
+    --chart-6: 240 60% 55%;
+    --chart-7: 0 70% 50%;
+    --chart-8: 100 60% 35%;
 
     --radius: 1rem;
 
     /* Glassmorphism Effects - Light */
-    --glass-bg: 0 0% 100% / 0.7;
-    --glass-border: 214 32% 85% / 0.5;
-    --glass-highlight: 0 0% 100% / 0.8;
-    --glass-shadow: 220 20% 20% / 0.1;
+    --glass-bg: 0 0% 100% / 0.85;
+    --glass-border: 220 30% 75% / 0.4;
+    --glass-highlight: 0 0% 100% / 0.9;
+    --glass-shadow: 220 30% 30% / 0.08;
 
     /* Glow Effects */
-    --glow-primary: 190 95% 40%;
-    --glow-secondary: 270 85% 55%;
-    --glow-accent: 220 90% 50%;
+    --glow-primary: 185 85% 35%;
+    --glow-secondary: 265 75% 50%;
+    --glow-accent: 240 60% 55%;
 
-    /* Gradients - Light */
-    --gradient-hero: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(210 40% 96%) 50%, hsl(210 40% 98%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.9) 0%, hsl(210 40% 98% / 0.7) 100%);
-    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.8) 0%, hsl(210 40% 98% / 0.6) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(190 95% 40% / 0.1) 0%, transparent 70%);
-    --gradient-mesh: radial-gradient(at 40% 20%, hsl(270 85% 55% / 0.08) 0%, transparent 50%), 
-                     radial-gradient(at 80% 0%, hsl(190 95% 40% / 0.1) 0%, transparent 50%),
-                     radial-gradient(at 0% 50%, hsl(220 90% 50% / 0.06) 0%, transparent 50%),
-                     radial-gradient(at 80% 50%, hsl(330 80% 50% / 0.06) 0%, transparent 50%),
-                     radial-gradient(at 0% 100%, hsl(270 85% 55% / 0.06) 0%, transparent 50%);
+    /* Gradients - Light (Subtle & Clean) */
+    --gradient-hero: linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(220 25% 94%) 50%, hsl(220 20% 97%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.9) 0%, hsl(220 20% 97% / 0.8) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(185 85% 35% / 0.08) 0%, transparent 70%);
+    --gradient-mesh: radial-gradient(at 40% 20%, hsl(265 75% 50% / 0.06) 0%, transparent 50%), 
+                     radial-gradient(at 80% 0%, hsl(185 85% 35% / 0.08) 0%, transparent 50%),
+                     radial-gradient(at 0% 50%, hsl(240 60% 55% / 0.05) 0%, transparent 50%),
+                     radial-gradient(at 80% 50%, hsl(340 75% 50% / 0.04) 0%, transparent 50%),
+                     radial-gradient(at 0% 100%, hsl(265 75% 50% / 0.05) 0%, transparent 50%);
 
-    /* Shadows - Light */
-    --shadow-sm: 0 2px 8px -2px hsl(220 20% 20% / 0.08);
-    --shadow-md: 0 4px 16px -4px hsl(220 20% 20% / 0.1);
-    --shadow-lg: 0 8px 32px -8px hsl(220 20% 20% / 0.12);
-    --shadow-xl: 0 16px 64px -16px hsl(220 20% 20% / 0.15);
-    --shadow-glow: 0 0 40px hsl(190 95% 40% / 0.15), 0 0 80px hsl(190 95% 40% / 0.05);
-    --shadow-glow-accent: 0 0 40px hsl(270 85% 55% / 0.15), 0 0 80px hsl(270 85% 55% / 0.05);
-    --shadow-crystal: 0 8px 32px -8px hsl(220 20% 20% / 0.1), inset 0 1px 0 0 hsl(0 0% 100% / 0.8);
+    /* Shadows - Light (Softer) */
+    --shadow-sm: 0 2px 8px -2px hsl(220 30% 30% / 0.06);
+    --shadow-md: 0 4px 16px -4px hsl(220 30% 30% / 0.08);
+    --shadow-lg: 0 8px 32px -8px hsl(220 30% 30% / 0.1);
+    --shadow-xl: 0 16px 64px -16px hsl(220 30% 30% / 0.12);
+    --shadow-glow: 0 0 30px hsl(185 85% 35% / 0.12), 0 0 60px hsl(185 85% 35% / 0.04);
+    --shadow-glow-accent: 0 0 30px hsl(265 75% 50% / 0.12), 0 0 60px hsl(265 75% 50% / 0.04);
+    --shadow-crystal: 0 8px 32px -8px hsl(220 30% 30% / 0.08), inset 0 1px 0 0 hsl(0 0% 100% / 0.9);
 
     /* Sidebar - Light */
-    --sidebar-background: 0 0% 100% / 0.9;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 190 95% 40%;
+    --sidebar-background: 0 0% 100% / 0.95;
+    --sidebar-foreground: 220 30% 15%;
+    --sidebar-primary: 185 85% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 94%;
-    --sidebar-accent-foreground: 190 95% 35%;
-    --sidebar-border: 214 32% 85%;
-    --sidebar-ring: 190 95% 40%;
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 185 85% 30%;
+    --sidebar-border: 220 20% 88%;
+    --sidebar-ring: 185 85% 35%;
   }
 
   .dark {
