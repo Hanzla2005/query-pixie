@@ -187,6 +187,92 @@ serve(async (req) => {
 
     console.log(`Found ${correlations.length} significant correlations`);
 
+    // Generate trend data for numeric columns (line chart data)
+    const trendData: any = {};
+    numericColumns.forEach(col => {
+      const values = sampleRows.map((row, idx) => ({
+        index: idx + 1,
+        value: parseFloat(String(row[col]).replace(/[^0-9.+-eE]/g, ""))
+      })).filter(v => !isNaN(v.value));
+      
+      if (values.length > 0) {
+        trendData[col] = values;
+      }
+    });
+
+    // Generate box plot data (quartiles)
+    const boxPlotData: any = {};
+    numericColumns.forEach(col => {
+      const values = sampleRows
+        .map(row => parseFloat(String(row[col]).replace(/[^0-9.+-eE]/g, "")))
+        .filter(v => !isNaN(v))
+        .sort((a, b) => a - b);
+      
+      if (values.length >= 5) {
+        const n = values.length;
+        const q1 = values[Math.floor(n * 0.25)];
+        const median = values[Math.floor(n * 0.5)];
+        const q3 = values[Math.floor(n * 0.75)];
+        const iqr = q3 - q1;
+        const whiskerLow = Math.max(values[0], q1 - 1.5 * iqr);
+        const whiskerHigh = Math.min(values[n - 1], q3 + 1.5 * iqr);
+        const outliers = values.filter(v => v < whiskerLow || v > whiskerHigh);
+        
+        boxPlotData[col] = {
+          min: values[0],
+          q1,
+          median,
+          q3,
+          max: values[n - 1],
+          whiskerLow,
+          whiskerHigh,
+          outliers: outliers.slice(0, 10), // limit outliers for display
+          mean: values.reduce((a, b) => a + b, 0) / n
+        };
+      }
+    });
+
+    // Generate cumulative distribution data
+    const cumulativeData: any = {};
+    numericColumns.forEach(col => {
+      const values = sampleRows
+        .map(row => parseFloat(String(row[col]).replace(/[^0-9.+-eE]/g, "")))
+        .filter(v => !isNaN(v))
+        .sort((a, b) => a - b);
+      
+      if (values.length >= 5) {
+        const n = values.length;
+        cumulativeData[col] = values.map((v, i) => ({
+          value: v,
+          percentile: ((i + 1) / n) * 100
+        }));
+      }
+    });
+
+    // Calculate moving average for trend detection
+    const movingAverageData: any = {};
+    numericColumns.forEach(col => {
+      const values = sampleRows.map((row, idx) => ({
+        index: idx + 1,
+        value: parseFloat(String(row[col]).replace(/[^0-9.+-eE]/g, ""))
+      })).filter(v => !isNaN(v.value));
+      
+      if (values.length >= 5) {
+        const windowSize = Math.min(5, Math.floor(values.length / 3));
+        const maData = values.map((point, i) => {
+          if (i < windowSize - 1) {
+            return { index: point.index, value: point.value, ma: null };
+          }
+          const windowValues = values.slice(i - windowSize + 1, i + 1).map(v => v.value);
+          const ma = windowValues.reduce((a, b) => a + b, 0) / windowSize;
+          return { index: point.index, value: point.value, ma };
+        });
+        movingAverageData[col] = maData;
+      }
+    });
+
+    console.log(`Generated trend data for ${Object.keys(trendData).length} columns`);
+
     // Prepare prompt for AI
     const systemPrompt = `You are a data analysis expert. Analyze the provided dataset and generate comprehensive, detailed insights.
 
@@ -346,7 +432,7 @@ Provide comprehensive statistical narratives for each column and relationship.`;
       throw new Error("Failed to parse AI insights");
     }
 
-    // Return the analysis
+    // Return the analysis with additional trend visualizations data
     return new Response(
       JSON.stringify({
         dataset: {
@@ -356,7 +442,11 @@ Provide comprehensive statistical narratives for each column and relationship.`;
           columns: dataset.columns
         },
         insights,
-        sampleData: sampleRows.slice(0, 10) // Include first 10 rows for reference
+        sampleData: sampleRows.slice(0, 10),
+        trendData,
+        boxPlotData,
+        cumulativeData,
+        movingAverageData
       }),
       { 
         headers: { 

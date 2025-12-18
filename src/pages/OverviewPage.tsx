@@ -4,9 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, ArrowLeft, TrendingUp, PieChart as PieChartIcon, BarChart3, Activity, Database } from "lucide-react";
+import { Download, ArrowLeft, TrendingUp, PieChart as PieChartIcon, BarChart3, Activity, Database, LineChart as LineChartIcon, BoxSelect, Layers } from "lucide-react";
 import { toast } from "sonner";
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ScatterChart, Scatter } from "recharts";
+import { 
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  AreaChart, Area, ScatterChart, Scatter, ComposedChart, ReferenceLine
+} from "recharts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import DatasetSelectorDialog from "@/components/DatasetSelectorDialog";
@@ -30,6 +34,10 @@ const OverviewPage = () => {
   const [dataset, setDataset] = useState<any>(null);
   const [data, setData] = useState<any[]>([]);
   const [statistics, setStatistics] = useState<any>({});
+  const [trendData, setTrendData] = useState<any>({});
+  const [boxPlotData, setBoxPlotData] = useState<any>({});
+  const [cumulativeData, setCumulativeData] = useState<any>({});
+  const [movingAverageData, setMovingAverageData] = useState<any>({});
   const [isDownloading, setIsDownloading] = useState(false);
   const [selectorOpen, setSelectorOpen] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -66,6 +74,10 @@ const OverviewPage = () => {
 
       setDataset(overviewData.dataset);
       setData(overviewData.sampleData || []);
+      setTrendData(overviewData.trendData || {});
+      setBoxPlotData(overviewData.boxPlotData || {});
+      setCumulativeData(overviewData.cumulativeData || {});
+      setMovingAverageData(overviewData.movingAverageData || {});
 
       // Transform AI insights into statistics format
       const insights = overviewData.insights;
@@ -569,6 +581,309 @@ const OverviewPage = () => {
                   )}
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Comprehensive Trend Visualizations Section */}
+        {Object.keys(trendData).length > 0 && (
+          <Card className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <LineChartIcon className="h-5 w-5 text-primary" />
+                <CardTitle>Trend Visualizations</CardTitle>
+              </div>
+              <CardDescription>
+                Multiple visualization types to explore data trends, distributions, and patterns
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {/* Line Charts with Moving Average */}
+              {Object.entries(movingAverageData).slice(0, 3).map(([colName, data]: any) => (
+                <div key={`line-${colName}`} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <h4 className="font-semibold">{colName} - Trend with Moving Average</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Line chart showing data progression with 5-point moving average overlay
+                  </p>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <ComposedChart data={data}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="index" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
+                        }}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="hsl(190, 95%, 55%)" 
+                        strokeWidth={1.5}
+                        dot={{ r: 2 }}
+                        name="Value"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="ma" 
+                        stroke="hsl(330, 80%, 60%)" 
+                        strokeWidth={2.5}
+                        dot={false}
+                        name="Moving Avg"
+                        strokeDasharray="0"
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Box Plot Summaries */}
+        {Object.keys(boxPlotData).length > 0 && (
+          <Card className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <BoxSelect className="h-5 w-5 text-primary" />
+                <CardTitle>Statistical Distribution Summary</CardTitle>
+              </div>
+              <CardDescription>
+                Box plot style statistics showing quartiles, median, and range for each numeric column
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2">
+                {Object.entries(boxPlotData).slice(0, 6).map(([colName, stats]: any) => (
+                  <div key={`box-${colName}`} className="p-4 rounded-lg bg-muted/30 border border-border">
+                    <h4 className="font-semibold mb-3 text-primary">{colName}</h4>
+                    <div className="space-y-2">
+                      {/* Visual box plot representation */}
+                      <div className="relative h-8 bg-background rounded-full overflow-hidden border border-border">
+                        {(() => {
+                          const range = stats.max - stats.min;
+                          const q1Pos = ((stats.q1 - stats.min) / range) * 100;
+                          const medianPos = ((stats.median - stats.min) / range) * 100;
+                          const q3Pos = ((stats.q3 - stats.min) / range) * 100;
+                          return (
+                            <>
+                              {/* Whisker line */}
+                              <div 
+                                className="absolute top-1/2 h-0.5 bg-muted-foreground/50 -translate-y-1/2"
+                                style={{ left: '2%', right: '2%' }}
+                              />
+                              {/* IQR Box */}
+                              <div 
+                                className="absolute top-1 bottom-1 bg-primary/30 border-2 border-primary rounded"
+                                style={{ left: `${q1Pos}%`, width: `${q3Pos - q1Pos}%` }}
+                              />
+                              {/* Median line */}
+                              <div 
+                                className="absolute top-0 bottom-0 w-1 bg-accent"
+                                style={{ left: `${medianPos}%` }}
+                              />
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <div className="grid grid-cols-5 text-xs text-center">
+                        <div>
+                          <p className="text-muted-foreground">Min</p>
+                          <p className="font-medium">{stats.min?.toFixed(1)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Q1</p>
+                          <p className="font-medium">{stats.q1?.toFixed(1)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Median</p>
+                          <p className="font-semibold text-primary">{stats.median?.toFixed(1)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Q3</p>
+                          <p className="font-medium">{stats.q3?.toFixed(1)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Max</p>
+                          <p className="font-medium">{stats.max?.toFixed(1)}</p>
+                        </div>
+                      </div>
+                      {stats.outliers?.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {stats.outliers.length} outlier(s) detected
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Cumulative Distribution Charts */}
+        {Object.keys(cumulativeData).length > 0 && (
+          <Card className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" />
+                <CardTitle>Cumulative Distribution Functions</CardTitle>
+              </div>
+              <CardDescription>
+                Empirical CDF showing the probability distribution of values across the dataset
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                {Object.entries(cumulativeData).slice(0, 4).map(([colName, data]: any) => (
+                  <div key={`cdf-${colName}`} className="space-y-2">
+                    <h4 className="font-semibold text-sm">{colName}</h4>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <AreaChart data={data}>
+                        <defs>
+                          <linearGradient id={`cdf-gradient-${colName}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(270, 85%, 65%)" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="hsl(270, 85%, 65%)" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="value" stroke="hsl(var(--muted-foreground))" fontSize={10} tickFormatter={(v) => v.toFixed(0)} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickFormatter={(v) => `${v.toFixed(0)}%`} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                          formatter={(value: any) => [`${value.toFixed(1)}%`, 'Percentile']}
+                          labelFormatter={(label: any) => `Value: ${label.toFixed(2)}`}
+                        />
+                        <Area 
+                          type="stepAfter" 
+                          dataKey="percentile" 
+                          stroke="hsl(270, 85%, 65%)" 
+                          fill={`url(#cdf-gradient-${colName})`}
+                        />
+                        <ReferenceLine y={50} stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Histogram Comparison Grid */}
+        {Object.keys(statistics.distributions || {}).length > 0 && (
+          <Card className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                <CardTitle>Distribution Histograms Comparison</CardTitle>
+              </div>
+              <CardDescription>
+                Side-by-side comparison of value distributions across numeric columns
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2">
+                {Object.entries(statistics.distributions)
+                  .filter(([_, data]: any) => data && data.length > 0 && data[0]?.range)
+                  .slice(0, 4)
+                  .map(([colName, data]: any, index: number) => (
+                  <div key={`hist-${colName}`} className="space-y-2">
+                    <h4 className="font-semibold text-sm">{colName}</h4>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={data}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="range" 
+                          stroke="hsl(var(--muted-foreground))" 
+                          fontSize={9} 
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                        />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Bar 
+                          dataKey="count" 
+                          fill={COLORS[index % COLORS.length]} 
+                          radius={[4, 4, 0, 0]} 
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Scatter Plot Matrix for correlated variables */}
+        {statistics.bivariateAnalysis && statistics.bivariateAnalysis.length > 1 && (
+          <Card className="report-section border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                <CardTitle>Scatter Plot Matrix</CardTitle>
+              </div>
+              <CardDescription>
+                Visual exploration of relationships between multiple numeric variables
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {statistics.bivariateAnalysis.slice(0, 6).map((bivar: any, idx: number) => (
+                  bivar.scatterData && bivar.scatterData.length > 0 && (
+                    <div key={`scatter-matrix-${idx}`} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-xs truncate">{bivar.column1} vs {bivar.column2}</h4>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          Math.abs(bivar.correlation) > 0.7 
+                            ? 'bg-primary/20 text-primary' 
+                            : Math.abs(bivar.correlation) > 0.4 
+                            ? 'bg-accent/20 text-accent' 
+                            : 'bg-muted text-muted-foreground'
+                        }`}>
+                          r={bivar.correlation?.toFixed(2)}
+                        </span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={150}>
+                        <ScatterChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis type="number" dataKey="x" stroke="hsl(var(--muted-foreground))" fontSize={9} hide />
+                          <YAxis type="number" dataKey="y" stroke="hsl(var(--muted-foreground))" fontSize={9} hide />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--background))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '6px',
+                              fontSize: '11px'
+                            }}
+                            formatter={(value: any) => value.toFixed(2)}
+                          />
+                          <Scatter data={bivar.scatterData} fill={COLORS[idx % COLORS.length]} />
+                        </ScatterChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
