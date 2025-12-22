@@ -43,9 +43,11 @@ CRITICAL: When creating visualizations, you MUST format data correctly for each 
 Data format: [{ name: "Category A", value: 150 }, { name: "Category B", value: 200 }]
 Use: Comparing discrete categories (sales by product, counts by region)
 
-**LINE CHART** - Show trends over time
-Data format: [{ name: "Jan", value: 100 }, { name: "Feb", value: 150 }, { name: "Mar", value: 120 }]
-Use: Time series, trends, sequential data
+**LINE CHART** - Show trends over time (supports multiple series!)
+Single series format: [{ name: "Jan", value: 100 }, { name: "Feb", value: 150 }]
+Multi-series format: [{ name: "1980", JP_Sales: 50, NA_Sales: 100 }, { name: "1981", JP_Sales: 60, NA_Sales: 120 }]
+series: ["JP_Sales", "NA_Sales"] - REQUIRED for multi-line charts, lists all line names
+Use: Time series, trends, comparing multiple metrics over time (e.g., comparing sales by region over years)
 
 **PIE/DONUT CHART** - Show proportions of a whole
 Data format: [{ name: "Category A", value: 30 }, { name: "Category B", value: 70 }]
@@ -212,7 +214,7 @@ Choose the chart type that best answers the user's question and reveals insights
                   series: {
                     type: "array",
                     items: { type: "string" },
-                    description: "REQUIRED for stacked-bar and grouped-bar: Array of data key names matching keys in data objects. Example: if data is [{name: 'Q1', product1: 100, product2: 200}], series should be ['product1', 'product2']"
+                    description: "REQUIRED for multi-series charts (stacked-bar, grouped-bar, multi-line). Array of data key names matching keys in data objects. Example: for multi-line comparing JP_Sales vs NA_Sales, data should be [{name: '1980', JP_Sales: 50, NA_Sales: 100}] and series should be ['JP_Sales', 'NA_Sales']. Each series gets its own colored line with legend."
                   }
                 },
                 required: ["chartType", "title", "data"],
