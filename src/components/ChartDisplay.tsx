@@ -101,6 +101,13 @@ const ChartDisplay = ({
         );
 
       case "line":
+        // Detect if we have multi-series data (series array provided or data has multiple numeric keys)
+        const lineSeriesKeys = series.length > 0 
+          ? series 
+          : data.length > 0 
+            ? Object.keys(data[0]).filter(k => k !== 'name' && typeof data[0][k] === 'number')
+            : ['value'];
+        
         return (
           <ResponsiveContainer width="100%" height={500}>
             <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -126,14 +133,30 @@ const ChartDisplay = ({
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
               />
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                stroke={COLORS[0]}
-                strokeWidth={3} 
-                dot={{ fill: COLORS[0], r: 5 }}
-                activeDot={{ r: 7 }}
-              />
+              {lineSeriesKeys.length > 1 ? (
+                lineSeriesKeys.map((key, idx) => (
+                  <Line 
+                    key={key}
+                    type="monotone" 
+                    dataKey={key} 
+                    name={key}
+                    stroke={COLORS[idx % COLORS.length]}
+                    strokeWidth={3} 
+                    dot={{ fill: COLORS[idx % COLORS.length], r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                ))
+              ) : (
+                <Line 
+                  type="monotone" 
+                  dataKey={lineSeriesKeys[0] || 'value'} 
+                  name={lineSeriesKeys[0] || 'Value'}
+                  stroke={COLORS[0]}
+                  strokeWidth={3} 
+                  dot={{ fill: COLORS[0], r: 5 }}
+                  activeDot={{ r: 7 }}
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         );
