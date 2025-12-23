@@ -90,7 +90,9 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
       const decoder = new TextDecoder();
       let assistantContent = "";
       let assistantMessageId = (Date.now() + 1).toString();
-      let toolCallBuffer: any = null; // Buffer for accumulating tool call data
+      // Buffer for accumulating tool calls by index (supports multiple tool calls)
+      let toolCallBuffers: Record<number, { name: string; arguments: string }> = {};
+      let lastParsedChartData: any = null;
 
       // Add initial assistant message
       setMessages(prev => [
@@ -143,45 +145,52 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
               );
             }
             
-            // Handle tool calls (accumulate arguments across chunks)
-            if (toolCalls && toolCalls[0]) {
-              const toolCall = toolCalls[0];
-              
-              // Initialize buffer if this is the first chunk
-              if (toolCall.function?.name && !toolCallBuffer) {
-                toolCallBuffer = {
-                  name: toolCall.function.name,
-                  arguments: ""
-                };
-              }
-              
-              // Accumulate arguments
-              if (toolCall.function?.arguments) {
-                toolCallBuffer.arguments += toolCall.function.arguments;
-              }
-              
-              // Try to parse when we have complete JSON
-              if (toolCallBuffer && toolCallBuffer.arguments) {
-                try {
-                  const args = JSON.parse(toolCallBuffer.arguments);
-                  const functionName = toolCallBuffer.name;
-                  
-                  if (functionName === "create_chart" && args.chartType && args.data) {
-                    setMessages(prev =>
-                      prev.map(m =>
-                        m.id === assistantMessageId
-                          ? { 
-                              ...m, 
-                              content: assistantContent,
-                              chartData: args 
-                            }
-                          : m
-                      )
-                    );
-                    toolCallBuffer = null; // Reset after successful parse
+            // Handle tool calls (accumulate arguments across chunks, track by index)
+            if (toolCalls) {
+              for (const toolCall of toolCalls) {
+                const idx = toolCall.index ?? 0;
+                
+                // Initialize buffer if this is the first chunk for this index
+                if (toolCall.function?.name && !toolCallBuffers[idx]) {
+                  toolCallBuffers[idx] = {
+                    name: toolCall.function.name,
+                    arguments: ""
+                  };
+                }
+                
+                // Accumulate arguments
+                if (toolCall.function?.arguments && toolCallBuffers[idx]) {
+                  toolCallBuffers[idx].arguments += toolCall.function.arguments;
+                }
+                
+                // Try to parse when we have complete JSON
+                if (toolCallBuffers[idx] && toolCallBuffers[idx].arguments) {
+                  try {
+                    const args = JSON.parse(toolCallBuffers[idx].arguments);
+                    const functionName = toolCallBuffers[idx].name;
+                    
+                    if (functionName === "create_chart" && args.chartType && args.data) {
+                      // Only use the LAST tool call (highest index) as it's the most relevant
+                      lastParsedChartData = args;
+                      
+                      // Generate a default description if no text content
+                      const chartDescription = assistantContent || `Here's the ${args.title || args.chartType + ' chart'} based on your request.`;
+                      
+                      setMessages(prev =>
+                        prev.map(m =>
+                          m.id === assistantMessageId
+                            ? { 
+                                ...m, 
+                                content: chartDescription,
+                                chartData: args 
+                              }
+                            : m
+                        )
+                      );
+                    }
+                  } catch (e) {
+                    // JSON not complete yet, keep accumulating
                   }
-                } catch (e) {
-                  // JSON not complete yet, keep accumulating
                 }
               }
             }
@@ -191,6 +200,18 @@ const ChatInterface = ({ datasetId }: ChatInterfaceProps) => {
           }
         }
       }
+
+      // Final update: ensure we have meaningful content for conversation history
+      setMessages(prev =>
+        prev.map(m => {
+          if (m.id === assistantMessageId) {
+            const finalContent = m.content || 
+              (m.chartData ? `Here's the ${m.chartData.title || 'visualization'} based on your request.` : "");
+            return { ...m, content: finalContent };
+          }
+          return m;
+        })
+      );
 
       setIsLoading(false);
     } catch (error) {
